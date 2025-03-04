@@ -8,9 +8,12 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AppFooter: typeof import('./components/AppFooter.vue')['default']
+    CreateRoomDialog: typeof import('./components/room/CreateRoomDialog.vue')['default']
     HelloWorld: typeof import('./components/HelloWorld.vue')['default']
     Moveable: typeof import('./components/Moveable.vue')['default']
-    RoomCard: typeof import('./components/RoomCard.vue')['default']
+    NewRoomForm: typeof import('./components/NewRoomForm.vue')['default']
+    RoomCard: typeof import('./components/room/RoomCard.vue')['default']
+    RoomList: typeof import('./components/room/RoomList.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     Test: typeof import('./components/Test.vue')['default']

@@ -1,10 +1,10 @@
 <template>
   <v-card color="#7fff94" variant="outlined">
     <v-card-title>
-      Комната №#
+      Комната #{{ props.room.id }}
     </v-card-title>
     <v-card-text>
-      Игроков: 0/2
+      Игроков: {{ props.room.player_in }}/{{ props.room.max_player }}
     </v-card-text>
     <v-card-actions>
       <v-row>
@@ -19,11 +19,15 @@
   <v-dialog v-model="enterRoom" width="500" persistent>
     <v-card>
       <v-card-title class="mx-2 my-2">
-        Комната #
+        Комната #{{ props.room.id }}
       </v-card-title>
       <v-divider />
       <v-card-text>
-        test
+        <v-text-field variant="outlined" density="compact" type="password">
+          <template #label>
+            Пароль
+          </template>
+        </v-text-field>
       </v-card-text>
       <v-divider />
       <v-card-actions>
@@ -45,7 +49,16 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
 
-let enterRoom: boolean = ref(false);
+const props = defineProps<{
+  room: {
+    id: string;
+    title: string;
+    player_in: number;
+    max_player: number;
+  },
+}>()
+
+const enterRoom = ref(false);
 
 function openRoom() {
   enterRoom.value = true
