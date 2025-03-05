@@ -3,13 +3,10 @@
     <v-row class="pa-0 mt-6">
       <v-col cols="6">
         <div class="text-h5">
-          Комнаты
+          {{ $t('titles.rooms') }}
         </div>
       </v-col>
-      <v-col
-        class="d-flex justify-end"
-        cols="6"
-      >
+      <v-col class="d-flex justify-end" cols="6">
         <v-btn @click="openCreateRoomDialog">
           Создать комнату
         </v-btn>
@@ -17,34 +14,35 @@
     </v-row>
     <v-divider class="my-6" />
     <RoomList :rooms="rooms" />
+    <v-divider class="my-6" />
     <CreateRoomDialog ref="newRoomDialog" />
   </v-container>
 </template>
 
 <script lang="ts" setup>
 import type CreateRoomDialog from "@/components/room/CreateRoomDialog.vue";
-import {ref} from "vue"
+import { ref } from "vue"
 const rooms = ref([
   {
-    id: "13123",
+    id: "1",
     player_in: 1,
     max_player: 2,
     title: 'Комната №1'
   },
   {
-    id: "13123",
+    id: "2",
     player_in: 2,
     max_player: 2,
     title: 'Комната №2'
   },
   {
-    id: "13123",
+    id: "3",
     player_in: 2,
     max_player: 2,
     title: 'Комната №3'
   },
   {
-    id: "13123",
+    id: "4",
     player_in: 2,
     max_player: 2,
     title: 'Комната №4'

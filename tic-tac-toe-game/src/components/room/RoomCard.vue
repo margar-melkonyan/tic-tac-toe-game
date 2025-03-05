@@ -1,31 +1,52 @@
 <template>
-  <v-card color="#7fff94" variant="outlined">
+  <v-card
+    color="#7fff94"
+    variant="outlined"
+  >
     <v-card-title>
-      Комната #{{ props.room.id }}
+      {{ $t('room.title', [props.room.title ]) }}
     </v-card-title>
     <v-card-text>
-      Игроков: {{ props.room.player_in }}/{{ props.room.max_player }}
+      {{ $t('room.players', [props.room.player_in, props.room.max_player]) }}
     </v-card-text>
     <v-card-actions>
       <v-row>
-        <v-col cols="12" class="d-flex justify-end">
-          <v-btn variant="outlined" color="#ff7fea" density="comfortable" @click="openRoom">
-            Войти
+        <v-col
+          cols="12"
+          class="d-flex
+          justify-end"
+        >
+          <v-btn
+            variant="outlined"
+            :color="props.room.player_in === props.room.max_player ? 'white' : '#ff7fea'"
+            density="comfortable"
+            :disabled="props.room.player_in === props.room.max_player"
+            @click="openRoom"
+          >
+            {{ $t('enter') }}
           </v-btn>
         </v-col>
       </v-row>
     </v-card-actions>
   </v-card>
-  <v-dialog v-model="enterRoom" width="500" persistent>
+  <v-dialog
+    v-model="enterRoom"
+    width="500"
+    persistent
+  >
     <v-card>
       <v-card-title class="mx-2 my-2">
-        Комната #{{ props.room.id }}
+        {{ $t('room.title', [props.room.title]) }}
       </v-card-title>
       <v-divider />
       <v-card-text>
-        <v-text-field variant="outlined" density="compact" type="password">
+        <v-text-field
+          variant="outlined"
+          density="compact"
+          type="password"
+        >
           <template #label>
-            Пароль
+            {{ $t('room.fields.password') }}
           </template>
         </v-text-field>
       </v-card-text>
@@ -33,12 +54,12 @@
       <v-card-actions>
         <v-col class="d-flex justify-start py-0">
           <v-btn @click="closeRoom">
-            Закрыть
+            {{ $t('close') }}
           </v-btn>
         </v-col>
         <v-col class="d-flex justify-end py-0">
           <v-btn>
-            Войти
+            {{ $t('enter') }}
           </v-btn>
         </v-col>
       </v-card-actions>
