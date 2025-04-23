@@ -12,6 +12,7 @@ import router from '../router'
 // Types
 import type { App } from 'vue'
 import { i18n } from './i18n'
+import api from "@/api";
 
 export function registerPlugins (app: App) {
   app
@@ -19,4 +20,5 @@ export function registerPlugins (app: App) {
     .use(router)
     .use(pinia)
     .use(i18n)
+  app.config.globalProperties.$api = api;
 }

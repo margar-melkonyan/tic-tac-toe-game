@@ -41,7 +41,8 @@
 
 <script lang="ts" setup>
 import type CreateRoomDialog from "@/components/room/CreateRoomDialog.vue";
-import { ref } from "vue"
+import { ref } from "vue";
+import axios from "axios";
 
 const loginDialog = ref(false)
 const rooms = ref([
