@@ -1,6 +1,18 @@
 export default {
+  enterForm: {
+    sign_in: 'Войти',
+    sign_up: 'Зарегистрироваться',
+    name: 'Имя',
+    email: 'Почта',
+    password: 'Пароль',
+    password_confirmation: 'Подтверждение пароля'
+  },
   titles: {
     rooms: 'Комнаты',
+  },
+  menu: {
+    sign_in: 'Войти',
+    sign_out: 'Выйти',
   },
   room: {
     title: 'Комната "{0}"',

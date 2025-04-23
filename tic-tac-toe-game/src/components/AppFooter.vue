@@ -1,12 +1,22 @@
 <template>
-  <v-footer height="40" app>
+  <v-footer
+    height="40"
+    app
+  >
     <div
       class="text-caption text-disabled"
       style="position: absolute; right: 16px;"
     >
       &copy;
       <span class="d-none d-sm-inline-block">
-        TicTacToe Game By <a alt="github-link" target="_blank" href="https://github.com/margar-melkonyan" class="social-link">Melkonyan M.A.</a>
+        TicTacToe Game By
+        <a
+          target="_blank"
+          href="https://github.com/margar-melkonyan"
+          class="social-link"
+        >
+          Melkonyan M.
+        </a>
       </span>
     </div>
   </v-footer>

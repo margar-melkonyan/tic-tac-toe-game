@@ -9,10 +9,13 @@ declare module 'vue' {
   export interface GlobalComponents {
     AppFooter: typeof import('./components/AppFooter.vue')['default']
     CreateRoomDialog: typeof import('./components/room/CreateRoomDialog.vue')['default']
+    FormDialog: typeof import('./components/auth/FormDialog.vue')['default']
     HelloWorld: typeof import('./components/HelloWorld.vue')['default']
     RoomCard: typeof import('./components/room/RoomCard.vue')['default']
     RoomList: typeof import('./components/room/RoomList.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SignInForm: typeof import('./components/auth/SignInForm.vue')['default']
+    SignUpForm: typeof import('./components/auth/SignUpForm.vue')['default']
   }
 }
