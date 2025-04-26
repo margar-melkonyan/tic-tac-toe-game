@@ -8,6 +8,4 @@ import (
 func authRouterGroup(auth chi.Router) {
 	auth.Post("/sign-in", controller.SingIn)
 	auth.Post("/sign-up", controller.SignUp)
-	auth.Post("/sign-out", controller.SignOut)
-	auth.Get("/refresh-token", controller.RefreshToken)
 }
