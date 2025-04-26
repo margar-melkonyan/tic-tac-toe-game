@@ -20,5 +20,5 @@ export function registerPlugins (app: App) {
     .use(router)
     .use(pinia)
     .use(i18n)
-  app.config.globalProperties.$api = api;
+  app.config.globalProperties.$api = new api();
 }

@@ -1,1 +1,1 @@
-DROP scores;
+DROP TABLE scores;

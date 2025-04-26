@@ -18,6 +18,7 @@
   </v-card-text>
   <v-card-actions>
     <v-btn
+      @click="signIn"
       variant="tonal"
       block
     >
@@ -27,8 +28,16 @@
 </template>
 <script lang="ts" setup>
 import {defineEmits} from 'vue';
+import axios from "axios";
+import {inject} from 'vue'
+
+const $api = inject('$api')
 
 const emits = defineEmits([
   'close'
 ])
+
+const signIn = () => {
+  axios.post($api.api.auth.signIn())
+}
 </script>
