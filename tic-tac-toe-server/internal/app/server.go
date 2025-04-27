@@ -9,10 +9,15 @@ import (
 	"syscall"
 
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/config"
+	postgres_storage "github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/repository/postgres"
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/router"
+	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/storage/postgres"
 )
 
 func RunHttpServer() {
+	db, _ := postgres.NewConnection()
+	postgres_storage.NewRoomRepository(db)
+
 	ctx, stop := signal.NotifyContext(
 		context.Background(),
 		syscall.SIGINT,
