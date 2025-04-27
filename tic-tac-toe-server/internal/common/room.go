@@ -15,6 +15,6 @@ type Room struct {
 
 type RoomRequest struct {
 	Name      string `validate:"required,alphanumunicode,min=8,max=255" json:"name"`
-	IsPrivate bool   `validate:"required,boolean" json:"is_private"`
+	IsPrivate bool   `validate:"boolean" json:"is_private"`
 	Password  string `validate:"required,alpha,min=8,max=255" json:"password"`
 }

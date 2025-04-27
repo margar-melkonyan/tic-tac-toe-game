@@ -26,7 +26,7 @@ func NewRoomRepository(db *sql.DB) RoomRepository {
 
 func (repo *RoomRepo) FindAll(ctx context.Context) ([]*common.Room, error) {
 	var rooms []*common.Room
-	rows, err := repo.db.Query("SELECT * FROM rooms WHERE deleted_at IS NULL")
+	rows, err := repo.db.QueryContext(ctx, "SELECT * FROM rooms WHERE deleted_at IS NULL")
 	defer func() {
 		rows.Close()
 	}()
@@ -57,7 +57,7 @@ func (repo *RoomRepo) FindAll(ctx context.Context) ([]*common.Room, error) {
 
 func (repo *RoomRepo) Create(ctx context.Context, room common.Room) error {
 	query := "INSERT INTO rooms (name, is_private, password) VALUES ($1, $2, $3)"
-	result, err := repo.db.Exec(query, room.Name, room.IsPrivate, room.Password)
+	result, err := repo.db.ExecContext(ctx, query, room.Name, room.IsPrivate, room.Password)
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,8 @@ func (repo *RoomRepo) Create(ctx context.Context, room common.Room) error {
 }
 
 func (repo *RoomRepo) DeleteById(ctx context.Context, id uint64) error {
-	result, err := repo.db.Exec(
+	result, err := repo.db.ExecContext(
+		ctx,
 		"UPDATE rooms SET deleted_at = now() WHERE id = $1 AND deleted_at IS NULL",
 		id,
 	)

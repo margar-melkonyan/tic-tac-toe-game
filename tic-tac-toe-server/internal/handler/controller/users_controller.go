@@ -3,6 +3,7 @@ package controller
 import (
 	"net/http"
 
+	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/helper"
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/service"
 )
 
@@ -16,4 +17,14 @@ func NewUserHandler(service service.UserService) *UserHandler {
 	}
 }
 
-func (h *UserHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {}
+func (h *UserHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
+	resp := helper.Response{}
+	user, err := h.service.GetCurrentUser(r.Context())
+	if err != nil {
+		resp.Message = err.Error()
+		resp.ResponseWriter(w, r, http.StatusConflict)
+		return
+	}
+	resp.Data = user
+	resp.ResponseWriter(w, r, http.StatusOK)
+}
