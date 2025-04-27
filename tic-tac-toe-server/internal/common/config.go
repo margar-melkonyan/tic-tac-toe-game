@@ -15,8 +15,9 @@ type JWTConfig struct {
 }
 
 type ServerConfig struct {
-	Port      string
-	LogLevel  int8
-	DbConfig  DBConfig
-	JWTConfig JWTConfig
+	Port        string
+	LogLevel    int8
+	BcryptPower int
+	DbConfig    DBConfig
+	JWTConfig   JWTConfig
 }

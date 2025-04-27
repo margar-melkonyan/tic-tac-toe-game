@@ -6,12 +6,12 @@ import (
 )
 
 type ScoreService struct {
-	repo repository.RoomRepository
+	repo repository.ScoreRepository
 }
 
-func NewScoreService(repoRoom repository.ScoreRepository) *ScoreService {
+func NewScoreService(repoScore repository.ScoreRepository) *ScoreService {
 	return &ScoreService{
-		repo: repoRoom,
+		repo: repoScore,
 	}
 }
 

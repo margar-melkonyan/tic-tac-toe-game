@@ -5,7 +5,9 @@ import (
 	"log/slog"
 
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/common"
+	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/config"
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/repository"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type RoomService struct {
@@ -31,14 +33,20 @@ func (service *RoomService) GetById() *common.Room {
 	return nil
 }
 
-func (service *RoomService) Create() error {
-	return nil
+func (service *RoomService) Create(ctx context.Context, form common.RoomRequest) error {
+	password, err := bcrypt.GenerateFromPassword([]byte(form.Password), config.ServerConfig.BcryptPower)
+	if err != nil {
+		return err
+	}
+	form.Password = string(password)
+	room := common.Room{
+		Name:      form.Name,
+		Password:  form.Password,
+		IsPrivate: form.IsPrivate,
+	}
+	return service.repo.Create(ctx, room)
 }
 
-func (service *RoomService) UpdateById() error {
-	return nil
-}
-
-func (service *RoomService) DeleteById() error {
-	return nil
+func (service *RoomService) DeleteById(ctx context.Context, id uint64) error {
+	return service.repo.DeleteById(ctx, id)
 }

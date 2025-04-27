@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/common"
 )
@@ -12,10 +13,9 @@ type RoomRepo struct {
 }
 
 type RoomRepository interface {
-	FindById(ctx context.Context, id uint64) (*common.Room, error)
 	FindAll(ctx context.Context) ([]*common.Room, error)
+	Create(ctx context.Context, room common.Room) error
 	DeleteById(ctx context.Context, id uint64) error
-	UpdateById(ctx context.Context, entity common.Room) error
 }
 
 func NewRoomRepository(db *sql.DB) RoomRepository {
@@ -24,13 +24,9 @@ func NewRoomRepository(db *sql.DB) RoomRepository {
 	}
 }
 
-func (repo *RoomRepo) FindById(ctx context.Context, id uint64) (*common.Room, error) {
-	return nil, nil
-}
-
 func (repo *RoomRepo) FindAll(ctx context.Context) ([]*common.Room, error) {
 	var rooms []*common.Room
-	rows, err := repo.db.Query("SELECT * FROM rooms;")
+	rows, err := repo.db.Query("SELECT * FROM rooms WHERE deleted_at IS NULL")
 	defer func() {
 		rows.Close()
 	}()
@@ -59,6 +55,36 @@ func (repo *RoomRepo) FindAll(ctx context.Context) ([]*common.Room, error) {
 	return rooms, nil
 }
 
-func (repo *RoomRepo) DeleteById(ctx context.Context, id uint64) error { return nil }
+func (repo *RoomRepo) Create(ctx context.Context, room common.Room) error {
+	query := "INSERT INTO rooms (name, is_private, password) VALUES ($1, $2, $3)"
+	result, err := repo.db.Exec(query, room.Name, room.IsPrivate, room.Password)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return errors.New("room was not created")
+	}
+	return nil
+}
 
-func (repo *RoomRepo) UpdateById(ctx context.Context, entity common.Room) error { return nil }
+func (repo *RoomRepo) DeleteById(ctx context.Context, id uint64) error {
+	result, err := repo.db.Exec(
+		"UPDATE rooms SET deleted_at = now() WHERE id = $1 AND deleted_at IS NULL",
+		id,
+	)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return errors.New("room was not deleted")
+	}
+	return nil
+}

@@ -11,6 +11,7 @@ var attribute = map[string]string{
 	"lastname":    "Lastname",
 	"patronymic":  "Patronymic",
 	"text":        "Text",
+	"is_private":  "Private",
 }
 
 func GetAttribute(field string) string {

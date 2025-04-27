@@ -24,10 +24,15 @@ func NewConfig() {
 		slog.Error(err.Error())
 		panic(err.Error())
 	}
-
+	bcryptPower, err := strconv.ParseInt(os.Getenv("BCRYPT_POWER"), 10, 8)
+	if err != nil {
+		slog.Error(err.Error())
+		panic(err.Error())
+	}
 	ServerConfig = &common.ServerConfig{
-		Port:     os.Getenv("SERVER_PORT"),
-		LogLevel: int8(logLevel),
+		Port:        os.Getenv("SERVER_PORT"),
+		LogLevel:    int8(logLevel),
+		BcryptPower: int(bcryptPower),
 		DbConfig: common.DBConfig{
 			Username: os.Getenv("DB_USERNAME"),
 			Password: os.Getenv("DB_PASSWORD"),
