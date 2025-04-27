@@ -16,10 +16,6 @@ func NewAuthHandler(service service.AuthService) *AuthHandler {
 	}
 }
 
-func (h *AuthHandler) SingIn(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) SingIn(w http.ResponseWriter, r *http.Request) {}
 
-}
-
-func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
-
-}
+func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {}

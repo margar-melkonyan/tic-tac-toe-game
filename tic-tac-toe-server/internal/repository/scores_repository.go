@@ -7,26 +7,29 @@ import (
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/common"
 )
 
-type UserRepo struct {
+type ScoreRepo struct {
 	db *sql.DB
 }
 
-type UserRepository interface {
+type ScoreRepository interface {
 	FindById(ctx context.Context, id uint64) (*common.Room, error)
 	FindAll(ctx context.Context) ([]*common.Room, error)
 	DeleteById(ctx context.Context, id uint64) error
 	UpdateById(ctx context.Context, entity common.Room) error
 }
 
-func NewUserRepository(db *sql.DB) UserRepository {
-	return &UserRepo{
+func NewScoreRepository(db *sql.DB) ScoreRepository {
+	return &ScoreRepo{
 		db: db,
 	}
 }
 
-func (repo *UserRepo) FindById(ctx context.Context, id uint64) (*common.Room, error) {
+func (repo *ScoreRepo) FindById(ctx context.Context, id uint64) (*common.Room, error) {
 	return nil, nil
 }
-func (repo *UserRepo) FindAll(ctx context.Context) ([]*common.Room, error)      { return nil, nil }
-func (repo *UserRepo) DeleteById(ctx context.Context, id uint64) error          { return nil }
-func (repo *UserRepo) UpdateById(ctx context.Context, entity common.Room) error { return nil }
+
+func (repo *ScoreRepo) FindAll(ctx context.Context) ([]*common.Room, error) { return nil, nil }
+
+func (repo *ScoreRepo) DeleteById(ctx context.Context, id uint64) error { return nil }
+
+func (repo *ScoreRepo) UpdateById(ctx context.Context, entity common.Room) error { return nil }

@@ -16,6 +16,4 @@ func NewUserHandler(service service.UserService) *UserHandler {
 	}
 }
 
-func (h *UserHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
-
-}
+func (h *UserHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {}

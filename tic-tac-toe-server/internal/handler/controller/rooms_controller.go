@@ -1,8 +1,13 @@
 package controller
 
 import (
+	"encoding/json"
+	"log/slog"
 	"net/http"
 
+	"github.com/go-playground/validator/v10"
+	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/common"
+	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/helper"
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/service"
 )
 
@@ -16,7 +21,46 @@ func NewRoomHandler(service service.RoomService) *RoomHandler {
 	}
 }
 
-func (h *RoomHandler) GetRooms(w http.ResponseWriter, r *http.Request)    {}
-func (h *RoomHandler) EnterRoom(w http.ResponseWriter, r *http.Request)   {}
-func (h *RoomHandler) CreateRoom(w http.ResponseWriter, r *http.Request)  {}
+func (h *RoomHandler) GetRooms(w http.ResponseWriter, r *http.Request) {
+	data := h.service.GetAll(r.Context())
+	resp := helper.Response{
+		Data: data,
+	}
+	resp.ResponseWriter(w, r, http.StatusOK)
+}
+
+func (h *RoomHandler) EnterRoom(w http.ResponseWriter, r *http.Request) {}
+
+func (h *RoomHandler) CreateRoom(w http.ResponseWriter, r *http.Request) {
+	resp := helper.Response{}
+	if resp.IsValidMediaType(w, r) {
+		return
+	}
+
+	var form common.RoomRequest
+	r.Body = http.MaxBytesReader(w, r.Body, 10<<20)
+	err := json.NewDecoder(r.Body).Decode(&form)
+	if err != nil {
+		slog.Error("Error decoding JSON: " + err.Error())
+		resp.ResponseWriter(w, r, http.StatusBadRequest)
+		return
+	}
+	validate := validator.New()
+
+	err = validate.Struct(&form)
+	if err != nil {
+		errs := err.(validator.ValidationErrors)
+		humanReadableErrors, err := helper.LocalizedValidationMessages(r.Context(), errs)
+		if err != nil {
+			slog.Error("Error localizing validation messages: " + err.Error())
+			resp.ResponseWriter(w, r, http.StatusInternalServerError)
+			return
+		}
+		resp.Data = humanReadableErrors
+		resp.ResponseWriter(w, r, http.StatusUnprocessableEntity)
+		return
+	}
+	resp.ResponseWriter(w, r, http.StatusOK)
+}
+
 func (h *RoomHandler) DestroyRoom(w http.ResponseWriter, r *http.Request) {}
