@@ -2,10 +2,15 @@ package router
 
 import (
 	"github.com/go-chi/chi"
+
+	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/common/dependency"
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/handler/middleware"
 )
 
-func NewRouter() *chi.Mux {
+var dependencies *dependency.AppDependencies
+
+func NewRouter(deps *dependency.AppDependencies) *chi.Mux {
+	dependencies = deps
 	api := chi.NewMux()
 	api.Use(middleware.Logger)
 

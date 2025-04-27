@@ -8,9 +8,11 @@ import (
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/config"
 )
 
-const connectionDriver = "postgres"
+type Storage struct {
+	ConnectionDriver string
+}
 
-func NewConnection() (*sql.DB, error) {
+func (stroage *Storage) NewConnection() (*sql.DB, error) {
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
 		config.ServerConfig.DbConfig.Host,
 		config.ServerConfig.DbConfig.Port,
@@ -20,12 +22,12 @@ func NewConnection() (*sql.DB, error) {
 		config.ServerConfig.DbConfig.SSLMode,
 	)
 
-	db, err := sql.Open(connectionDriver, dsn)
+	db, err := sql.Open(stroage.ConnectionDriver, dsn)
 
 	if err != nil {
 		return nil, fmt.Errorf(
 			"the applicaiton cannot open connection with %s",
-			connectionDriver,
+			stroage.ConnectionDriver,
 		)
 	}
 

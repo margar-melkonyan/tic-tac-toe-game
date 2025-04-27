@@ -18,7 +18,3 @@ type RoomRequest struct {
 	IsPrivate bool   `json:"is_private,omitempty"`
 	Password  string `json:"password"`
 }
-
-func (room Room) GetId() uint64 {
-	return room.Id
-}
