@@ -16,4 +16,4 @@ func NewScoreHandler(service service.ScoreService) *ScoreHandler {
 	}
 }
 
-func (h *ScoreHandler) GetCurrentUserScore(w http.ResponseWriter, r *http.Request) {}
+func (h *ScoreHandler) GetCurrentUserScores(w http.ResponseWriter, r *http.Request) {}

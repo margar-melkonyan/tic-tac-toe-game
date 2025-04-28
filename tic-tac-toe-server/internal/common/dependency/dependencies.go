@@ -33,8 +33,8 @@ func NewAppDependencies() *AppDependencies {
 	userRepo := repository.NewUserRepository(db)
 	//services
 	roomService := service.NewRoomService(roomRepo)
-	scoreService := service.NewScoreService(scoreRepo)
-	userService := service.NewUserService(userRepo)
+	scoreService := service.NewScoreService(scoreRepo, userRepo)
+	userService := service.NewUserService(userRepo, scoreRepo)
 	authService := service.NewAuthService(userRepo)
 	//handlers
 	roomHandler := controller.NewRoomHandler(*roomService)

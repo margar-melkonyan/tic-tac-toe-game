@@ -12,10 +12,8 @@ type ScoreRepo struct {
 }
 
 type ScoreRepository interface {
-	FindById(ctx context.Context, id uint64) (*common.Room, error)
-	FindAll(ctx context.Context) ([]*common.Room, error)
-	DeleteById(ctx context.Context, id uint64) error
-	UpdateById(ctx context.Context, entity common.Room) error
+	Create(ctx context.Context, score *common.Score) error
+	GetAllByUser(ctx context.Context, user *common.User) ([]*common.Score, error)
 }
 
 func NewScoreRepository(db *sql.DB) ScoreRepository {
@@ -24,12 +22,32 @@ func NewScoreRepository(db *sql.DB) ScoreRepository {
 	}
 }
 
-func (repo *ScoreRepo) FindById(ctx context.Context, id uint64) (*common.Room, error) {
-	return nil, nil
+func (repo ScoreRepo) Create(ctx context.Context, score *common.Score) error {
+	return nil
 }
 
-func (repo *ScoreRepo) FindAll(ctx context.Context) ([]*common.Room, error) { return nil, nil }
-
-func (repo *ScoreRepo) DeleteById(ctx context.Context, id uint64) error { return nil }
-
-func (repo *ScoreRepo) UpdateById(ctx context.Context, entity common.Room) error { return nil }
+func (repo ScoreRepo) GetAllByUser(ctx context.Context, user *common.User) ([]*common.Score, error) {
+	var scores []*common.Score
+	query := "SELECT user_id, is_won, created_at FROM scores WHERE user_id = $1"
+	rows, err := repo.db.QueryContext(ctx, query)
+	defer func() {
+		rows.Close()
+	}()
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var score common.Score
+		err := rows.Scan(
+			&score.ID,
+			&score.UserID,
+			&score.IsWon,
+			&score.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		scores = append(scores, &score)
+	}
+	return scores, nil
+}

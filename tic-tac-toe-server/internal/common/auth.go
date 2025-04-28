@@ -27,3 +27,11 @@ type User struct {
 	UpdatedAt time.Time  `json:"-"`
 	DeletedAt *time.Time `json:"-"`
 }
+
+type UserResponse struct {
+	ID           uuid.UUID `json:"id"`
+	Name         string    `json:"name"`
+	Email        string    `json:"email"`
+	Scores       []*Score  `json:"scores,omitempty"`
+	CurrentScore *uint     `json:"current_score,omitempty"`
+}
