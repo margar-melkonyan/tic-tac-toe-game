@@ -11,18 +11,21 @@ var dependencies *dependency.AppDependencies
 
 func NewRouter(deps *dependency.AppDependencies) *chi.Mux {
 	dependencies = deps
-	api := chi.NewMux()
-	api.Use(middleware.Logger)
+	route := chi.NewMux()
+	route.Use(
+		middleware.CorsMiddleware,
+		middleware.Logger,
+	)
 
-	api.Route("/auth", authRouterGroup)
-	api.Route("/api", func(v1 chi.Router) {
-		v1.Use(middleware.AuthMiddleware(deps))
-		v1.Route("/v1", func(r chi.Router) {
-			r.Route("/rooms", roomsRouterGroup)
-			r.Route("/users", usersRouterGroup)
-			r.Route("/scores", scoresRouterGroup)
+	route.Route("/auth", authRouterGroup)
+	route.Route("/api", func(api chi.Router) {
+		api.Use(middleware.AuthMiddleware(deps))
+		api.Route("/v1", func(v1 chi.Router) {
+			v1.Route("/rooms", roomsRouterGroup)
+			v1.Route("/users", usersRouterGroup)
+			v1.Route("/scores", scoresRouterGroup)
 		})
 	})
 
-	return api
+	return route
 }
