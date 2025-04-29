@@ -47,7 +47,7 @@ func (h *AuthHandler) SingIn(w http.ResponseWriter, r *http.Request) {
 			resp.ResponseWrite(w, r, http.StatusInternalServerError)
 			return
 		}
-		resp.Data = humanReadableErrors
+		resp.Errors = humanReadableErrors
 		resp.ResponseWrite(w, r, http.StatusUnprocessableEntity)
 		return
 	}
@@ -86,7 +86,7 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 			resp.ResponseWrite(w, r, http.StatusInternalServerError)
 			return
 		}
-		resp.Data = humanReadableErrors
+		resp.Errors = humanReadableErrors
 		resp.ResponseWrite(w, r, http.StatusUnprocessableEntity)
 		return
 	}

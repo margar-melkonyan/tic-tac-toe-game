@@ -16,6 +16,7 @@
     "axios": "^1.8.4",
     "core-js": "^3.37.1",
     "roboto-fontface": "*",
+    "vform": "^2.1.2",
     "vue": "^3.4.31",
     "vue-i18n": "^10.0.5",
     "vuetify": "^3.6.14"
