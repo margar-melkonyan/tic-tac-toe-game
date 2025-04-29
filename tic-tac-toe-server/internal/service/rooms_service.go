@@ -40,6 +40,7 @@ func (service *RoomService) Create(ctx context.Context, form common.RoomRequest)
 	}
 	form.Password = string(password)
 	room := common.Room{
+		CreatorID: form.CreatorID,
 		Name:      form.Name,
 		Password:  form.Password,
 		IsPrivate: form.IsPrivate,

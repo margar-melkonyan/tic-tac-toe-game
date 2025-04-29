@@ -27,7 +27,6 @@ func (repo *UserRepo) FindByEmail(ctx context.Context, email string) (*common.Us
 	var user common.User
 	query := "SELECT id, name, email, password, created_at FROM users WHERE email = $1 AND deleted_at IS NULL"
 	row := repo.db.QueryRowContext(ctx, query, email)
-
 	err := row.Scan(
 		&user.ID,
 		&user.Name,
@@ -35,7 +34,6 @@ func (repo *UserRepo) FindByEmail(ctx context.Context, email string) (*common.Us
 		&user.Password,
 		&user.CreatedAt,
 	)
-
 	if err != nil {
 		return nil, err
 	}

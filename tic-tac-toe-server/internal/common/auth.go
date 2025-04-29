@@ -29,9 +29,9 @@ type User struct {
 }
 
 type UserResponse struct {
-	ID           uuid.UUID `json:"id"`
-	Name         string    `json:"name"`
-	Email        string    `json:"email"`
-	Scores       []*Score  `json:"scores,omitempty"`
-	CurrentScore *uint     `json:"current_score,omitempty"`
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	Email     string    `json:"email"`
+	WonScore  *uint     `json:"current_won_score,omitempty"`
+	CreatedAt time.Time `json:"created_at"`
 }

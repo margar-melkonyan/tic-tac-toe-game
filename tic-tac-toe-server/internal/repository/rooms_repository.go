@@ -30,11 +30,9 @@ func (repo *RoomRepo) FindAll(ctx context.Context) ([]*common.Room, error) {
 	defer func() {
 		rows.Close()
 	}()
-
 	if err != nil {
 		return nil, err
 	}
-
 	for rows.Next() {
 		var room common.Room
 		err := rows.Scan(
@@ -42,6 +40,7 @@ func (repo *RoomRepo) FindAll(ctx context.Context) ([]*common.Room, error) {
 			&room.Name,
 			&room.IsPrivate,
 			&room.Password,
+			&room.CreatorID,
 			&room.Capacity,
 			&room.CreatedAt,
 			&room.UpdatedAt,
@@ -56,8 +55,15 @@ func (repo *RoomRepo) FindAll(ctx context.Context) ([]*common.Room, error) {
 }
 
 func (repo *RoomRepo) Create(ctx context.Context, room common.Room) error {
-	query := "INSERT INTO rooms (name, is_private, password) VALUES ($1, $2, $3)"
-	result, err := repo.db.ExecContext(ctx, query, room.Name, room.IsPrivate, room.Password)
+	query := "INSERT INTO rooms (name, is_private, creator_id, password) VALUES ($1, $2, $3, $4)"
+	result, err := repo.db.ExecContext(
+		ctx,
+		query,
+		room.Name,
+		room.IsPrivate,
+		room.CreatorID,
+		room.Password,
+	)
 	if err != nil {
 		return err
 	}

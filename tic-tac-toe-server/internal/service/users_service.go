@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/common"
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/repository"
@@ -30,16 +29,16 @@ func (service *UserService) GetCurrentUser(ctx context.Context) (*common.UserRes
 	if err != nil {
 		return nil, err
 	}
-	scores, err := service.scoreRepo.GetAllByUser(ctx, user)
+	currentWonScore, err := service.scoreRepo.GetWonScore(ctx, user)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(scores)
 	userResponse := &common.UserResponse{
-		ID:     user.ID,
-		Name:   user.Name,
-		Email:  user.Email,
-		Scores: scores,
+		ID:        user.ID,
+		Name:      user.Name,
+		Email:     user.Email,
+		CreatedAt: user.CreatedAt,
+		WonScore:  &currentWonScore,
 	}
-	return userResponse, err
+	return userResponse, nil
 }

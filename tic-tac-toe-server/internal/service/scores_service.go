@@ -32,5 +32,5 @@ func (service *ScoreService) GetCurrentUserScores(ctx context.Context) ([]*commo
 	if err != nil {
 		return nil, err
 	}
-	return service.scoreRepo.GetAllByUser(ctx, user)
+	return service.scoreRepo.FindAllByUser(ctx, user)
 }

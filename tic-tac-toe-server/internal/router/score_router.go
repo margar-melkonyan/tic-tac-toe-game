@@ -5,5 +5,5 @@ import (
 )
 
 func scoresRouterGroup(scores chi.Router) {
-	scores.Get("/scores", dependencies.ScoreHandler.GetCurrentUserScores)
+	scores.Get("/", dependencies.ScoreHandler.GetCurrentUserScores)
 }

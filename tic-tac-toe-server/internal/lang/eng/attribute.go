@@ -13,6 +13,7 @@ var attribute = map[string]string{
 	"patronymic":            "Patronymic",
 	"text":                  "Text",
 	"is_private":            "Private",
+	"creator_id":            "Creator",
 }
 
 func GetAttribute(field string) string {

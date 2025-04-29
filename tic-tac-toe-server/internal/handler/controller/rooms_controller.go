@@ -64,6 +64,7 @@ func (h *RoomHandler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := h.service.Create(r.Context(), form); err != nil {
 		resp.ResponseWriter(w, r, http.StatusInternalServerError)
+		return
 	}
 	resp.Message = "Created!"
 	resp.ResponseWriter(w, r, http.StatusOK)
