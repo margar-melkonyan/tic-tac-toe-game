@@ -51,6 +51,9 @@ func (repo *RoomRepo) FindAll(ctx context.Context) ([]*common.Room, error) {
 		}
 		rooms = append(rooms, &room)
 	}
+	if rooms == nil {
+		rooms = []*common.Room{}
+	}
 	return rooms, nil
 }
 

@@ -56,6 +56,9 @@ func (repo ScoreRepo) FindAllByUser(ctx context.Context, user *common.User) ([]*
 		}
 		scores = append(scores, &score)
 	}
+	if scores == nil {
+		scores = []*common.Score{}
+	}
 	return scores, nil
 }
 

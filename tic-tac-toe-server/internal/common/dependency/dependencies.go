@@ -9,11 +9,16 @@ import (
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/storage/postgres"
 )
 
+type GlobalRepositories struct {
+	UserRepository repository.UserRepository
+}
+
 type AppDependencies struct {
 	RoomHandler  controller.RoomHandler
 	ScoreHandler controller.ScoreHandler
 	UserHandler  controller.UserHandler
 	AuthHandler  controller.AuthHandler
+	GlobalRepositories
 }
 
 func NewAppDependencies() *AppDependencies {
@@ -47,5 +52,8 @@ func NewAppDependencies() *AppDependencies {
 		ScoreHandler: *scoreHandler,
 		UserHandler:  *userHandler,
 		AuthHandler:  *authHandler,
+		GlobalRepositories: GlobalRepositories{
+			UserRepository: userRepo,
+		},
 	}
 }

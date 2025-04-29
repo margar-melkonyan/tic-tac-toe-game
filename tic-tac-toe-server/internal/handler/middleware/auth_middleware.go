@@ -2,16 +2,18 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 	"net/http"
-	"strings"
 
+	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/common"
+	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/common/dependency"
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/helper"
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/service"
 )
 
-func AuthMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !strings.Contains(r.URL.Path, "auth") || strings.Contains(r.URL.Path, "current-user") {
+func AuthMiddleware(dependency *dependency.AppDependencies) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token := r.Header.Get("Authorization")
 			if token == "" {
 				resp := helper.Response{}
@@ -26,10 +28,18 @@ func AuthMiddleware(next http.Handler) http.Handler {
 				resp.ResponseWrite(w, r, http.StatusUnauthorized)
 				return
 			}
-
-			req := context.WithValue(r.Context(), "user_email", claims.Sub.Email)
-			r = r.WithContext(req)
-		}
-		next.ServeHTTP(w, r)
-	})
+			user, err := dependency.GlobalRepositories.UserRepository.FindByEmail(r.Context(), claims.Sub.Email)
+			if err != nil {
+				fmt.Println(err)
+				resp := helper.Response{}
+				resp.Message = err.Error()
+				resp.ResponseWrite(w, r, http.StatusUnauthorized)
+				return
+			}
+			ctx := context.WithValue(r.Context(), common.USER_MAIL, claims.Sub.Email)
+			ctx = context.WithValue(ctx, common.USER, user)
+			r = r.WithContext(ctx)
+			next.ServeHTTP(w, r)
+		})
+	}
 }

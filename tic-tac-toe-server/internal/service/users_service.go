@@ -21,7 +21,7 @@ func NewUserService(userRepo repository.UserRepository, scoreRepo repository.Sco
 }
 
 func (service *UserService) GetCurrentUser(ctx context.Context) (*common.UserResponse, error) {
-	email, ok := ctx.Value("user_email").(string)
+	email, ok := ctx.Value(common.USER_MAIL).(string)
 	if !ok {
 		return nil, errors.New("user email is not valid")
 	}

@@ -24,7 +24,7 @@ func NewScoreService(
 }
 
 func (service *ScoreService) GetCurrentUserScores(ctx context.Context) ([]*common.Score, error) {
-	email, ok := ctx.Value("user_email").(string)
+	email, ok := ctx.Value(common.USER_MAIL).(string)
 	if !ok {
 		return nil, errors.New("user email is not valid")
 	}
