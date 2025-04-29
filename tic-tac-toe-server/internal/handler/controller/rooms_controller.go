@@ -27,7 +27,7 @@ func (h *RoomHandler) GetRooms(w http.ResponseWriter, r *http.Request) {
 	resp := helper.Response{}
 	data := h.service.GetAll(r.Context())
 	resp.Data = data
-	resp.ResponseWriter(w, r, http.StatusOK)
+	resp.ResponseWrite(w, r, http.StatusOK)
 }
 
 func (h *RoomHandler) EnterRoom(w http.ResponseWriter, r *http.Request) {}
@@ -42,7 +42,7 @@ func (h *RoomHandler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&form)
 	if err != nil {
 		slog.Error("Error decoding JSON: " + err.Error())
-		resp.ResponseWriter(w, r, http.StatusBadRequest)
+		resp.ResponseWrite(w, r, http.StatusBadRequest)
 		return
 	}
 	validate := validator.New()
@@ -55,19 +55,19 @@ func (h *RoomHandler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 		)
 		if err != nil {
 			slog.Error("Error localizing validation messages: " + err.Error())
-			resp.ResponseWriter(w, r, http.StatusInternalServerError)
+			resp.ResponseWrite(w, r, http.StatusInternalServerError)
 			return
 		}
 		resp.Data = humanReadableErrors
-		resp.ResponseWriter(w, r, http.StatusUnprocessableEntity)
+		resp.ResponseWrite(w, r, http.StatusUnprocessableEntity)
 		return
 	}
 	if err := h.service.Create(r.Context(), form); err != nil {
-		resp.ResponseWriter(w, r, http.StatusInternalServerError)
+		resp.ResponseWrite(w, r, http.StatusInternalServerError)
 		return
 	}
 	resp.Message = "Created!"
-	resp.ResponseWriter(w, r, http.StatusOK)
+	resp.ResponseWrite(w, r, http.StatusOK)
 }
 
 func (h *RoomHandler) DestroyRoom(w http.ResponseWriter, r *http.Request) {
@@ -75,12 +75,12 @@ func (h *RoomHandler) DestroyRoom(w http.ResponseWriter, r *http.Request) {
 	param := chi.URLParam(r, "id")
 	id, err := strconv.ParseUint(param, 10, 64)
 	if err != nil {
-		resp.ResponseWriter(w, r, http.StatusNotFound)
+		resp.ResponseWrite(w, r, http.StatusNotFound)
 		return
 	}
 	if err := h.service.DeleteById(r.Context(), id); err != nil {
-		resp.ResponseWriter(w, r, http.StatusNoContent)
+		resp.ResponseWrite(w, r, http.StatusNoContent)
 		return
 	}
-	resp.ResponseWriter(w, r, http.StatusOK)
+	resp.ResponseWrite(w, r, http.StatusOK)
 }

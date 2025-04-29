@@ -16,22 +16,20 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			if token == "" {
 				resp := helper.Response{}
 				resp.Message = "You should be authorized!"
-				resp.ResponseWriter(w, r, http.StatusUnauthorized)
+				resp.ResponseWrite(w, r, http.StatusUnauthorized)
 				return
 			}
-
 			claims, err := service.CheckTokenIsNotExpired(token)
 			if err != nil {
 				resp := helper.Response{}
 				resp.Message = err.Error()
-				resp.ResponseWriter(w, r, http.StatusUnauthorized)
+				resp.ResponseWrite(w, r, http.StatusUnauthorized)
 				return
 			}
 
 			req := context.WithValue(r.Context(), "user_email", claims.Sub.Email)
 			r = r.WithContext(req)
 		}
-
 		next.ServeHTTP(w, r)
 	})
 }

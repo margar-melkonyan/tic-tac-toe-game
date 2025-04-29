@@ -21,9 +21,9 @@ func (h *ScoreHandler) GetCurrentUserScores(w http.ResponseWriter, r *http.Reque
 	resp := helper.Response{}
 	scores, err := h.service.GetCurrentUserScores(r.Context())
 	if err != nil {
-		resp.ResponseWriter(w, r, http.StatusInternalServerError)
+		resp.ResponseWrite(w, r, http.StatusInternalServerError)
 		return
 	}
 	resp.Data = scores
-	resp.ResponseWriter(w, r, http.StatusOK)
+	resp.ResponseWrite(w, r, http.StatusOK)
 }

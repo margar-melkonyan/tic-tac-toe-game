@@ -12,7 +12,11 @@ type Response struct {
 	Message string      `json:"message,omitempty"`
 }
 
-func (response *Response) ResponseWriter(w http.ResponseWriter, r *http.Request, status int) {
+type ResponseWriter interface {
+	ResponseWrite(w http.ResponseWriter, r *http.Request, status int)
+}
+
+func (response *Response) ResponseWrite(w http.ResponseWriter, r *http.Request, status int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	raw, err := json.Marshal(response)
@@ -27,7 +31,7 @@ func (response *Response) IsValidMediaType(w http.ResponseWriter, r *http.Reques
 	contentType := strings.TrimSpace(r.Header.Get("Content-Type"))
 	if contentType == "" || contentType != "application/json" {
 		response.Message = "Not valid content-type"
-		response.ResponseWriter(w, r, http.StatusUnsupportedMediaType)
+		response.ResponseWrite(w, r, http.StatusUnsupportedMediaType)
 		return true
 	}
 	return false

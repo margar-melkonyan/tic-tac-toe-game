@@ -22,9 +22,9 @@ func (h *UserHandler) GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	user, err := h.service.GetCurrentUser(r.Context())
 	if err != nil {
 		resp.Message = err.Error()
-		resp.ResponseWriter(w, r, http.StatusConflict)
+		resp.ResponseWrite(w, r, http.StatusConflict)
 		return
 	}
 	resp.Data = user
-	resp.ResponseWriter(w, r, http.StatusOK)
+	resp.ResponseWrite(w, r, http.StatusOK)
 }

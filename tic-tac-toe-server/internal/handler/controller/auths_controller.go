@@ -31,7 +31,7 @@ func (h *AuthHandler) SingIn(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&form)
 	if err != nil {
 		slog.Error("Error decoding JSON: " + err.Error())
-		resp.ResponseWriter(w, r, http.StatusBadRequest)
+		resp.ResponseWrite(w, r, http.StatusBadRequest)
 		return
 	}
 	validate := validator.New()
@@ -44,20 +44,20 @@ func (h *AuthHandler) SingIn(w http.ResponseWriter, r *http.Request) {
 		)
 		if err != nil {
 			slog.Error("Error localizing validation messages: " + err.Error())
-			resp.ResponseWriter(w, r, http.StatusInternalServerError)
+			resp.ResponseWrite(w, r, http.StatusInternalServerError)
 			return
 		}
 		resp.Data = humanReadableErrors
-		resp.ResponseWriter(w, r, http.StatusUnprocessableEntity)
+		resp.ResponseWrite(w, r, http.StatusUnprocessableEntity)
 		return
 	}
 	token, err := h.service.SignIn(r.Context(), form)
 	if err != nil {
-		resp.ResponseWriter(w, r, http.StatusInternalServerError)
+		resp.ResponseWrite(w, r, http.StatusInternalServerError)
 		return
 	}
 	resp.Data = token
-	resp.ResponseWriter(w, r, http.StatusOK)
+	resp.ResponseWrite(w, r, http.StatusOK)
 }
 
 func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
@@ -70,7 +70,7 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&form)
 	if err != nil {
 		slog.Error("Error decoding JSON: " + err.Error())
-		resp.ResponseWriter(w, r, http.StatusBadRequest)
+		resp.ResponseWrite(w, r, http.StatusBadRequest)
 		return
 	}
 	validate := validator.New()
@@ -83,18 +83,18 @@ func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 		)
 		if err != nil {
 			slog.Error("Error localizing validation messages: " + err.Error())
-			resp.ResponseWriter(w, r, http.StatusInternalServerError)
+			resp.ResponseWrite(w, r, http.StatusInternalServerError)
 			return
 		}
 		resp.Data = humanReadableErrors
-		resp.ResponseWriter(w, r, http.StatusUnprocessableEntity)
+		resp.ResponseWrite(w, r, http.StatusUnprocessableEntity)
 		return
 	}
 	if err := h.service.SignUp(r.Context(), form); err != nil {
 		resp.Message = err.Error()
-		resp.ResponseWriter(w, r, http.StatusConflict)
+		resp.ResponseWrite(w, r, http.StatusConflict)
 		return
 	}
 	resp.Message = "Created!"
-	resp.ResponseWriter(w, r, http.StatusOK)
+	resp.ResponseWrite(w, r, http.StatusOK)
 }
