@@ -39,9 +39,11 @@
         <v-text-field
           v-if="form.is_private"
           v-model="form.password"
-          :error-messages="form.errors.get('password')"
           variant="outlined"
-          type="password"
+          :error-messages="form.errors.get('password')"
+          :append-inner-icon="isHiddePassword ? 'mdi-eye' : 'mdi-eye-off'"
+          :type="isHiddePassword ? 'password' : 'text'"
+          @click:append-inner="showPassword"
         >
           <template #label>
             {{ $t('room.fields.password') }}
@@ -76,6 +78,7 @@ import Form from 'vform';
 const { proxy } = getCurrentInstance();
 const dialogCreateRoom = ref(false)
 const isPrivateRoom = ref(false)
+const isHiddePassword = ref(true);
 const form = ref(new Form({
   name: '',
   is_private: false,
@@ -101,6 +104,9 @@ function newRoom() {
 }
 function createRoom() {
   dialogCreateRoom.value = true
+}
+const showPassword = () => {
+  isHiddePassword.value = !isHiddePassword.value
 }
 defineExpose({ createRoom })
 </script>

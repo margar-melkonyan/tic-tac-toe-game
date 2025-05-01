@@ -43,7 +43,9 @@
         <v-text-field
           variant="outlined"
           density="compact"
-          type="password"
+          :append-inner-icon="isHiddePassword ? 'mdi-eye' : 'mdi-eye-off'"
+          :type="isHiddePassword ? 'password' : 'text'"
+          @click:append-inner="showPassword"
         >
           <template #label>
             {{ $t('room.fields.password') }}
@@ -70,6 +72,7 @@
 <script lang="ts" setup>
 import { ref, defineEmits } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+const isHiddePassword = ref(true);
 const emit = defineEmits([
   "openLoginDialog"
 ])
@@ -92,8 +95,10 @@ function openRoom() {
   }
   enterRoom.value = true
 }
-
 function closeRoom() {
   enterRoom.value = false
+}
+const showPassword = () => {
+  isHiddePassword.value = !isHiddePassword.value
 }
 </script>
