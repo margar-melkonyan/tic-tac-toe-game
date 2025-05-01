@@ -5,7 +5,6 @@ import (
 )
 
 func roomsRouterGroup(rooms chi.Router) {
-	rooms.Get("/", dependencies.RoomHandler.GetRooms)
 	rooms.Post("/", dependencies.RoomHandler.CreateRoom)
 	rooms.Post("/{id}", dependencies.RoomHandler.EnterRoom)
 	rooms.Delete("/{id}", dependencies.RoomHandler.DestroyRoom)

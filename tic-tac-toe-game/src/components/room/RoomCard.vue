@@ -4,10 +4,10 @@
     variant="outlined"
   >
     <v-card-title>
-      {{ $t('room.title', [props.room.title ]) }}
+      {{ $t('room.title', [props.room.name ]) }}
     </v-card-title>
     <v-card-text>
-      {{ $t('room.players', [props.room.player_in, props.room.max_player]) }}
+      {{ $t('room.players', [props.room.player_in, props.room.capacity]) }}
     </v-card-text>
     <v-card-actions>
       <v-row>
@@ -18,9 +18,9 @@
         >
           <v-btn
             variant="outlined"
-            :color="props.room.player_in === props.room.max_player ? 'white' : '#ff7fea'"
+            :color="props.room.player_in === props.room.capacity ? 'white' : '#ff7fea'"
             density="comfortable"
-            :disabled="props.room.player_in === props.room.max_player"
+            :disabled="props.room.player_in === props.room.capacity"
             @click="openRoom"
           >
             {{ $t('enter') }}
@@ -36,7 +36,7 @@
   >
     <v-card>
       <v-card-title class="mx-2 my-2">
-        {{ $t('room.title', [props.room.title]) }}
+        {{ $t('room.title', [props.room.name]) }}
       </v-card-title>
       <v-divider />
       <v-card-text>
@@ -73,9 +73,11 @@ import { ref } from 'vue';
 const props = defineProps<{
   room: {
     id: string;
-    title: string;
+    name: string;
     player_in: number;
-    max_player: number;
+    capacity: number;
+    is_private: boolean;
+    created_at: string;
   },
 }>()
 

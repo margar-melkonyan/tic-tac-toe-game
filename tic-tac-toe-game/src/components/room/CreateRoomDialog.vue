@@ -1,12 +1,21 @@
 <template>
-  <v-dialog v-model="dialogCreateRoom" origin="left center" max-width="500" persistent>
+  <v-dialog
+    v-model="dialogCreateRoom"
+    origin="left center"
+    max-width="500"
+    persistent
+  >
     <v-card>
       <v-card-title class="mx-2 my-2">
         {{ $t('room.create') }}
       </v-card-title>
       <v-divider />
       <v-card-text>
-        <v-text-field variant="outlined">
+        <v-text-field
+          v-model="form.name"
+          :error-messages="form.errors.get('name')"
+          variant="outlined"
+        >
           <template #label>
             {{ $t('room.fields.room_title') }}
           </template>
@@ -17,7 +26,8 @@
           </v-col>
           <v-col class="py-0 d-flex justify-end">
             <v-switch
-              v-model="isPrivateRoom"
+              v-model="form.is_private"
+              :error-messages="form.errors.get('is_private')"
               inset
               base-color="red"
               color="green"
@@ -26,7 +36,13 @@
             />
           </v-col>
         </v-row>
-        <v-text-field v-if="isPrivateRoom" variant="outlined" type="password">
+        <v-text-field
+          v-if="form.is_private"
+          v-model="form.password"
+          :error-messages="form.errors.get('password')"
+          variant="outlined"
+          type="password"
+        >
           <template #label>
             {{ $t('room.fields.password') }}
           </template>
@@ -35,12 +51,17 @@
       <v-divider />
       <v-card-actions>
         <v-col class="d-flex justify-start py-0">
-          <v-btn @click="closeRoomCreationDialog">
+          <v-btn
+            @click="closeRoomCreationDialog"
+          >
             {{ $t('close') }}
           </v-btn>
         </v-col>
         <v-col class="d-flex justify-end py-0">
-          <v-btn>
+          <v-btn
+            :loading="form.busy"
+            @click="newRoom"
+          >
             {{ $t('create') }}
           </v-btn>
         </v-col>
@@ -50,23 +71,36 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
-
+import { ref, defineEmits } from 'vue';
+import Form from 'vform';
+const { proxy } = getCurrentInstance();
 const dialogCreateRoom = ref(false)
 const isPrivateRoom = ref(false)
-
+const form = ref(new Form({
+  name: '',
+  is_private: false,
+  password: '',
+}));
+const emit = defineEmits([
+  "closeRoomCreateDialog",
+])
 function closeRoomCreationDialog() {
+  emit('closeRoomCreateDialog')
   isPrivateRoom.value = false
   dialogCreateRoom.value = false
 }
-
 function changeRoomPrivacy() {
   isPrivateRoom.value = !isPrivateRoom.value
 }
-
+function newRoom() {
+  form.value.post(proxy.$api.rooms.urls.rooms())
+    .then(() => {
+      closeRoomCreationDialog()
+    })
+    .catch(() => {})
+}
 function createRoom() {
   dialogCreateRoom.value = true
 }
-
 defineExpose({ createRoom })
 </script>

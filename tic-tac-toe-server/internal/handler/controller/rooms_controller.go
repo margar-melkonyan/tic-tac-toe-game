@@ -58,7 +58,7 @@ func (h *RoomHandler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 			resp.ResponseWrite(w, r, http.StatusInternalServerError)
 			return
 		}
-		resp.Data = humanReadableErrors
+		resp.Errors = humanReadableErrors
 		resp.ResponseWrite(w, r, http.StatusUnprocessableEntity)
 		return
 	}

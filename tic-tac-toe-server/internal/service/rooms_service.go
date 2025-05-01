@@ -34,16 +34,17 @@ func (service *RoomService) GetById() *common.Room {
 }
 
 func (service *RoomService) Create(ctx context.Context, form common.RoomRequest) error {
-	password, err := bcrypt.GenerateFromPassword([]byte(form.Password), config.ServerConfig.BcryptPower)
+	password, err := bcrypt.GenerateFromPassword([]byte(*form.Password), config.ServerConfig.BcryptPower)
 	if err != nil {
 		return err
 	}
-	form.Password = string(password)
+	hashedPassword := string(password)
+	form.Password = &hashedPassword
 	room := common.Room{
 		CreatorID: form.CreatorID,
 		Name:      form.Name,
-		Password:  form.Password,
-		IsPrivate: form.IsPrivate,
+		Password:  *form.Password,
+		IsPrivate: *form.IsPrivate,
 	}
 	return service.repo.Create(ctx, room)
 }

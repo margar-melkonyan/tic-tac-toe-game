@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/common"
@@ -30,7 +29,6 @@ func AuthMiddleware(dependency *dependency.AppDependencies) func(next http.Handl
 			}
 			user, err := dependency.GlobalRepositories.UserRepository.FindByEmail(r.Context(), claims.Sub.Email)
 			if err != nil {
-				fmt.Println(err)
 				resp := helper.Response{}
 				resp.Message = err.Error()
 				resp.ResponseWrite(w, r, http.StatusUnauthorized)

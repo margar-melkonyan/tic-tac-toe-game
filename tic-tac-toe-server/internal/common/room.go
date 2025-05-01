@@ -19,8 +19,8 @@ type Room struct {
 }
 
 type RoomRequest struct {
-	CreatorID uuid.UUID `validate:"required,uuid" json:"creator_id"`
-	Name      string    `validate:"required,alphanumunicode,min=8,max=255" json:"name"`
-	IsPrivate bool      `validate:"boolean" json:"is_private"`
-	Password  string    `validate:"required,alpha,min=8,max=255" json:"password"`
+	CreatorID uuid.UUID `json:"creator_id"`
+	Name      string    `validate:"required,min=8,max=255" json:"name"`
+	IsPrivate *bool     `validate:"required,boolean" json:"is_private"`
+	Password  *string   `validate:"required_if=IsPrivate true,max=255" json:"password"`
 }

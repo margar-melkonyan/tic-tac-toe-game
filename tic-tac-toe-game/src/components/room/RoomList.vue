@@ -1,7 +1,14 @@
 <template>
   <div>
-    <v-row v-for="(currentGroup, key) in groupedRooms" :key="`group-${key}`" class="mt-2">
-      <v-col v-for="(room, room_key) in currentGroup" :key="`room-${key}-${room_key}`">
+    <v-row
+      v-for="(currentGroup, key) in groupedRooms"
+      :key="`group-${key}`"
+      class="mt-2"
+    >
+      <v-col
+        v-for="(room, room_key) in currentGroup"
+        :key="`room-${key}-${room_key}`"
+      >
         <RoomCard :room="room" />
       </v-col>
     </v-row>
@@ -14,9 +21,11 @@ import { computed, defineProps } from 'vue';
 const props = defineProps<{
   rooms: Array<{
     id: string;
-    title: string;
+    name: string;
     player_in: number;
-    max_player: number;
+    capacity: number;
+    is_private: boolean;
+    created_at: string;
   }>;
 }>();
 

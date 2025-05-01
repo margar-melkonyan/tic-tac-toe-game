@@ -30,7 +30,7 @@
             <SignInForm @close="closeFormDialog" />
           </v-tabs-window-item>
           <v-tabs-window-item value="sign-up">
-            <SignUpForm @close="closeFormDialog" />
+            <SignUpForm @close="changeTab('sign-in')" />
           </v-tabs-window-item>
         </v-tabs-window>
       </div>
@@ -51,7 +51,6 @@
 
 <script lang="ts" setup>
 import {defineProps, defineEmits, ref} from 'vue';
-
 const tab = ref("sign-in")
 const emit = defineEmits([
   "close"
@@ -59,16 +58,13 @@ const emit = defineEmits([
 const props = defineProps<{
   loginDialog: boolean;
 }>();
-
 const changeTab = (tabVal: string) => {
   tab.value = tabVal
 }
-
 const closeFormDialog = () => {
   emit("close");
 }
 </script>
-
 <style>
 .scrollable-content {
   max-height: 500px;
