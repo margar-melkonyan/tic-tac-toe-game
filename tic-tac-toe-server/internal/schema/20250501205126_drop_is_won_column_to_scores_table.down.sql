@@ -1,1 +1,0 @@
-ALTER TABLE scores ADD is_won BOOLEAN;
