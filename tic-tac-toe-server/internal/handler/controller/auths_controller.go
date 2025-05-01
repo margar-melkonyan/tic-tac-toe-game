@@ -53,7 +53,8 @@ func (h *AuthHandler) SingIn(w http.ResponseWriter, r *http.Request) {
 	}
 	token, err := h.service.SignIn(r.Context(), form)
 	if err != nil {
-		resp.ResponseWrite(w, r, http.StatusInternalServerError)
+		resp.Message = err.Error()
+		resp.ResponseWrite(w, r, http.StatusConflict)
 		return
 	}
 	resp.Data = token

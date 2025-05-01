@@ -12,7 +12,9 @@ import router from '../router'
 // Types
 import type { App } from 'vue'
 import { i18n } from './i18n'
-import api from "@/api";
+import Vue3Toastify, { type ToastContainerOptions } from 'vue3-toastify';
+import { toast } from 'vue3-toastify'
+import API from '@/api'
 
 export function registerPlugins (app: App) {
   app
@@ -20,5 +22,10 @@ export function registerPlugins (app: App) {
     .use(router)
     .use(pinia)
     .use(i18n)
-  app.config.globalProperties.$api = new api();
+    .use(Vue3Toastify, {
+      autoClose: 3000,
+      position: toast.POSITION.BOTTOM_RIGHT,
+    } as ToastContainerOptions);
+
+    app.config.globalProperties.$api = new API().api
 }
