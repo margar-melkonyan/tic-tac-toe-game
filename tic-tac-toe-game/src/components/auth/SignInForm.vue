@@ -3,20 +3,22 @@
     <v-col>
       <v-text-field
         v-model="form.email"
-        :error-messages="form.errors.get('email')"
         hide-details="auto"
-        :label="$t('enterForm.email')"
         variant="outlined"
+        :error-messages="form.errors.get('email')"
+        :label="$t('enterForm.email')"
       />
     </v-col>
     <v-col>
       <v-text-field
         v-model="form.password"
-        :error-messages="form.errors.get('password')"
         hide-details="auto"
-        :label="$t('enterForm.password')"
         variant="outlined"
-        type="password"
+        :label="$t('enterForm.password')"
+        :error-messages="form.errors.get('password')"
+        :append-inner-icon="isHiddePassword ? 'mdi-eye' : 'mdi-eye-off'"
+        :type="isHiddePassword ? 'password' : 'text'"
+        @click:append-inner="showPassword"
       />
     </v-col>
   </v-card-text>
@@ -36,6 +38,7 @@ import { ref, defineEmits } from 'vue';
 import { Form } from 'vform';
 import 'vue3-toastify/dist/index.css';
 import { useAuthStore } from '@/stores/auth';
+const isHiddePassword = ref(true);
 const authStore = useAuthStore();
 const form = ref(new Form({
   email: '',
@@ -54,5 +57,8 @@ const signIn = () => {
 }
 const closeFormDialog = () => {
   emit("close");
+}
+const showPassword = () => {
+  isHiddePassword.value = !isHiddePassword.value
 }
 </script>

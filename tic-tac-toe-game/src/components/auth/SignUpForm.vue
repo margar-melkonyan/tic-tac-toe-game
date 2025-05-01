@@ -3,38 +3,43 @@
     <v-col>
       <v-text-field
         v-model="form.name"
-        :error-messages="form.errors.get('name')"
         hide-details="auto"
-        :label="$t('enterForm.name')"
         variant="outlined"
+        :label="$t('enterForm.name')"
+        :error-messages="form.errors.get('name')"
       />
     </v-col>
     <v-col>
       <v-text-field
         v-model="form.email"
-        :error-messages="form.errors.get('email')"
         hide-details="auto"
-        :label="$t('enterForm.email')"
         variant="outlined"
+        :label="$t('enterForm.email')"
+        :error-messages="form.errors.get('email')"
       />
     </v-col>
     <v-col>
       <v-text-field
         v-model="form.password"
-        :error-messages="form.errors.get('password')"
         hide-details="auto"
-        :label="$t('enterForm.password')"
         variant="outlined"
-        type="password"
+        :label="$t('enterForm.password')"
+        :error-messages="form.errors.get('password')"
+        :append-inner-icon="isHiddePassword ? 'mdi-eye' : 'mdi-eye-off'"
+        :type="isHiddePassword ? 'password' : 'text'"
+        @click:append-inner="showPassword"
       />
     </v-col>
     <v-col>
       <v-text-field
         v-model="form.password_confirmation"
-        :error-messages="form.errors.get('password_confirmation')"
         hide-details="auto"
-        :label="$t('enterForm.password_confirmation')"
         variant="outlined"
+        :label="$t('enterForm.password_confirmation')"
+        :error-messages="form.errors.get('password_confirmation')"
+        :append-inner-icon="isHiddePassword ? 'mdi-eye' : 'mdi-eye-off'"
+        :type="isHiddePassword ? 'password' : 'text'"
+        @click:append-inner="showPassword"
       />
     </v-col>
   </v-card-text>
@@ -55,6 +60,7 @@ import Form from 'vform';
 import { defineEmits } from 'vue';
 import { toast } from 'vue3-toastify';
 const authStore = useAuthStore();
+const isHiddePassword = ref(true);
 const emit = defineEmits([
   "close",
 ])
@@ -75,5 +81,8 @@ const signUp = () => {
 }
 const closeFormDialog = () => {
   emit("close");
+}
+const showPassword = () => {
+  isHiddePassword.value = !isHiddePassword.value
 }
 </script>

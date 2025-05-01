@@ -45,7 +45,10 @@
       </v-col>
     </v-row>
     <v-divider class="my-6" />
-    <RoomList :rooms="rooms" />
+    <RoomList
+      :rooms="rooms"
+      @open-login-dialog="openLoginDialog"
+    />
     <v-divider class="my-6" />
     <CreateRoomDialog
       ref="newRoomDialog"
@@ -64,12 +67,12 @@ import { ref } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import axios from "axios";
 const auth = useAuthStore();
-auth.currentUser()
-const loginDialog = ref(false)
-const rooms = ref({});
 const { proxy } = getCurrentInstance();
-const apiRooms = proxy.$api.rooms;
 const newRoomDialog = ref<InstanceType<typeof CreateRoomDialog> | null>(null);
+const loginDialog = ref(false)
+const rooms = ref([]);
+const apiRooms = proxy.$api.rooms;
+auth.currentUser()
 const openLoginDialog = () => {
   loginDialog.value = true;
 }

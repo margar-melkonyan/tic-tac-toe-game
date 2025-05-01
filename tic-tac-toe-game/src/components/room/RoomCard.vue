@@ -68,8 +68,12 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
-
+import { ref, defineEmits } from 'vue';
+import { useAuthStore } from '@/stores/auth';
+const emit = defineEmits([
+  "openLoginDialog"
+])
+const authStore = useAuthStore()
 const props = defineProps<{
   room: {
     id: string;
@@ -80,10 +84,12 @@ const props = defineProps<{
     created_at: string;
   },
 }>()
-
 const enterRoom = ref(false);
-
 function openRoom() {
+  if (authStore.user == null) {
+    emit("openLoginDialog")
+    return
+  }
   enterRoom.value = true
 }
 

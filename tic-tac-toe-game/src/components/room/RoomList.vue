@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="groupedRooms.length > 0">
     <v-row
       v-for="(currentGroup, key) in groupedRooms"
       :key="`group-${key}`"
@@ -9,15 +9,27 @@
         v-for="(room, room_key) in currentGroup"
         :key="`room-${key}-${room_key}`"
       >
-        <RoomCard :room="room" />
+        <RoomCard
+          :room="room"
+          @open-login-dialog="openLoginDialog"
+        />
       </v-col>
+    </v-row>
+  </div>
+  <div v-else>
+    <v-row class="d-flex justify-center">
+      <v-cols>
+        {{ $t('room.not_exists') }}
+      </v-cols>
     </v-row>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { computed, defineProps } from 'vue';
-
+const emit = defineEmits([
+  "openLoginDialog"
+])
 const props = defineProps<{
   rooms: Array<{
     id: string;
@@ -28,7 +40,6 @@ const props = defineProps<{
     created_at: string;
   }>;
 }>();
-
 const groupChunkSize = 3;
 const groupedRooms = computed(() => {
   const result = [];
@@ -37,4 +48,7 @@ const groupedRooms = computed(() => {
   }
   return result;
 });
+const openLoginDialog = () => {
+  emit("openLoginDialog")
+}
 </script>
