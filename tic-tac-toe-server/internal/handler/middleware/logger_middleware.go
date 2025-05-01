@@ -1,9 +1,9 @@
 package middleware
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 )
 
 type statusRecorder struct {
@@ -22,7 +22,14 @@ func Logger(next http.Handler) http.Handler {
 			statusCode:     200,
 			ResponseWriter: w,
 		}
+		start := time.Now()
 		next.ServeHTTP(sr, r)
-		slog.Info(fmt.Sprintf("[%v %v] %v", r.Method, sr.statusCode, r.URL))
+		slog.Info(
+			"Request info",
+			slog.String("method", r.Method),
+			slog.Int("status", sr.statusCode),
+			slog.String("uri", r.URL.String()),
+			slog.String("duration", time.Since(start).String()),
+		)
 	})
 }
