@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/common"
@@ -20,13 +21,24 @@ func NewRoomService(repoRoom repository.RoomRepository) *RoomService {
 	}
 }
 
-func (service *RoomService) GetAll(ctx context.Context) []*common.Room {
+func (service *RoomService) GetAll(ctx context.Context) []*common.RoomResponse {
 	rooms, err := service.repo.FindAll(context.Background())
+	var roomsResponse []*common.RoomResponse
+
+	for _, room := range rooms {
+		roomsResponse = append(roomsResponse, &common.RoomResponse{
+			ID:        room.ID,
+			Name:      room.Name,
+			Capacity:  room.Capacity,
+			IsPrivate: &room.IsPrivate,
+		})
+	}
+
 	if err != nil {
 		slog.Error(err.Error())
-		return []*common.Room{}
+		return []*common.RoomResponse{}
 	}
-	return rooms
+	return roomsResponse
 }
 
 func (service *RoomService) GetById() *common.Room {
@@ -40,8 +52,12 @@ func (service *RoomService) Create(ctx context.Context, form common.RoomRequest)
 	}
 	hashedPassword := string(password)
 	form.Password = &hashedPassword
+	user, ok := ctx.Value(common.USER).(*common.User)
+	if !ok {
+		return errors.New("userId is not correct")
+	}
 	room := common.Room{
-		CreatorID: form.CreatorID,
+		CreatorID: user.ID,
 		Name:      form.Name,
 		Password:  *form.Password,
 		IsPrivate: *form.IsPrivate,

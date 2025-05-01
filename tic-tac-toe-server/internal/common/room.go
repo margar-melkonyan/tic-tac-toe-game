@@ -24,3 +24,11 @@ type RoomRequest struct {
 	IsPrivate *bool     `validate:"required,boolean" json:"is_private"`
 	Password  *string   `validate:"required_if=IsPrivate true,max=255" json:"password"`
 }
+
+type RoomResponse struct {
+	ID        uint64 `json:"id"`
+	Name      string `json:"name"`
+	IsPrivate *bool  `json:"is_private"`
+	Capacity  uint8  `json:"capacity"`
+	PlayerIn  uint8  `json:"player_in"`
+}
