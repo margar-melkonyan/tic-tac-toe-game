@@ -84,7 +84,7 @@ const openCreateRoomDialog = () => {
 const fetchRooms = () => {
   axios.get(apiRooms.urls.rooms())
     .then(({data}) => {
-      rooms.value = data.data
+      rooms.value = data.data ?? []
     })
 }
 fetchRooms()

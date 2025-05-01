@@ -65,7 +65,7 @@ func (repo ScoreRepo) FindAllByUser(ctx context.Context, user *common.User) ([]*
 func (repo ScoreRepo) GetWonScore(ctx context.Context, user *common.User) (uint, error) {
 	var currentScore *uint
 	query := fmt.Sprintf(
-		"SELECT COUNT(*) as current_score FROM %v WHERE user_id = $1 AND is_won = true",
+		"SELECT COUNT(*) as current_score FROM %v WHERE user_id = $1 AND is_won = 1",
 		TABLE_NAME,
 	)
 	row := repo.db.QueryRowContext(ctx, query, user.ID)

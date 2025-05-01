@@ -24,6 +24,7 @@ func NewRoomService(repoRoom repository.RoomRepository) *RoomService {
 func (service *RoomService) GetAll(ctx context.Context) []*common.RoomResponse {
 	rooms, err := service.repo.FindAll(context.Background())
 	var roomsResponse []*common.RoomResponse
+	roomsResponse = make([]*common.RoomResponse, 0)
 
 	for _, room := range rooms {
 		roomsResponse = append(roomsResponse, &common.RoomResponse{
@@ -33,7 +34,6 @@ func (service *RoomService) GetAll(ctx context.Context) []*common.RoomResponse {
 			IsPrivate: &room.IsPrivate,
 		})
 	}
-
 	if err != nil {
 		slog.Error(err.Error())
 		return []*common.RoomResponse{}
