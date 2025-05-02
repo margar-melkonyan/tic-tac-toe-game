@@ -41,7 +41,7 @@ func (h *RoomHandler) GetRoom(w http.ResponseWriter, r *http.Request) helper.Res
 	}
 	data, err := h.service.GetById(r.Context(), id)
 	if err != nil {
-		resp.Errors = err
+		resp.Errors = err.Error()
 		return resp
 	}
 	resp.Data = data

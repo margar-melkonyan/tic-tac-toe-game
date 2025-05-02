@@ -28,7 +28,7 @@ func AuthMiddleware(dependency *dependency.AppDependencies) func(next http.Handl
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token := r.Header.Get("Authorization")
-			if r.URL.Query().Get("token") != "" {
+			if token == "" && r.URL.Query().Get("token") != "" {
 				token = r.URL.Query().Get("token")
 			}
 			if token == "" {

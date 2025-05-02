@@ -75,6 +75,7 @@
 <script lang="ts" setup>
 import { ref, defineEmits } from 'vue';
 import Form from 'vform';
+import axios from 'axios';
 const { proxy } = getCurrentInstance();
 const dialogCreateRoom = ref(false)
 const isPrivateRoom = ref(false)
@@ -92,6 +93,7 @@ function closeRoomCreationDialog() {
   isPrivateRoom.value = false
   dialogCreateRoom.value = false
 }
+axios.get("http://192.168.1.4:8000/api/v1/rooms/all")
 function changeRoomPrivacy() {
   isPrivateRoom.value = !isPrivateRoom.value
 }

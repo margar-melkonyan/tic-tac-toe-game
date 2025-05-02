@@ -1,52 +1,33 @@
 <template>
-  <v-card
-    color="#7fff94"
-    variant="outlined"
-  >
+  <v-card color="#7fff94" variant="outlined">
     <v-card-title>
-      {{ $t('room.title', [props.room.name ]) }}
+      {{ $t('room.title', [props.room.name]) }}
     </v-card-title>
     <v-card-text>
       {{ $t('room.players', [props.room.player_in, props.room.capacity]) }}
     </v-card-text>
     <v-card-actions>
       <v-row>
-        <v-col
-          cols="12"
-          class="d-flex
-          justify-end"
-        >
-          <v-btn
-            variant="outlined"
-            :color="props.room.player_in === props.room.capacity ? 'white' : '#ff7fea'"
-            density="comfortable"
-            :disabled="props.room.player_in === props.room.capacity"
-            @click="openRoom"
-          >
+        <v-col cols="12" class="d-flex
+          justify-end">
+          <v-btn variant="outlined" :color="props.room.player_in === props.room.capacity ? 'white' : '#ff7fea'"
+            density="comfortable" :disabled="props.room.player_in === props.room.capacity" @click="openRoom">
             {{ $t('enter') }}
           </v-btn>
         </v-col>
       </v-row>
     </v-card-actions>
   </v-card>
-  <v-dialog
-    v-model="enterRoom"
-    width="500"
-    persistent
-  >
+  <v-dialog v-model="enterRoom" width="500" persistent>
     <v-card>
       <v-card-title class="mx-2 my-2">
         {{ $t('room.title', [props.room.name]) }}
       </v-card-title>
       <v-divider />
       <v-card-text>
-        <v-text-field
-          variant="outlined"
-          density="compact"
-          :append-inner-icon="isHiddePassword ? 'mdi-eye' : 'mdi-eye-off'"
-          :type="isHiddePassword ? 'password' : 'text'"
-          @click:append-inner="showPassword"
-        >
+        <v-text-field variant="outlined" density="compact"
+          :append-inner-icon="isHiddePassword ? 'mdi-eye' : 'mdi-eye-off'" :type="isHiddePassword ? 'password' : 'text'"
+          @click:append-inner="showPassword">
           <template #label>
             {{ $t('room.fields.password') }}
           </template>
@@ -59,7 +40,7 @@
             {{ $t('close') }}
           </v-btn>
         </v-col>
-        <v-col class="d-flex justify-end py-0">
+        <v-col class="d-flex justify-end py-0" @click="connectToRoom(room.id)">
           <v-btn>
             {{ $t('enter') }}
           </v-btn>
@@ -97,6 +78,16 @@ function openRoom() {
 }
 function closeRoom() {
   enterRoom.value = false
+}
+function connectToRoom(id) {
+  const token = `${localStorage.getItem("token")}`;
+  const ws = new WebSocket(`ws://192.168.1.4:8000/api/v1/rooms/${id}?token=${token}`);
+  ws.onopen = function () {
+
+  };
+  ws.onerror = function (event) {
+    console.error("WebSocket error observed:", event);
+  };
 }
 const showPassword = () => {
   isHiddePassword.value = !isHiddePassword.value

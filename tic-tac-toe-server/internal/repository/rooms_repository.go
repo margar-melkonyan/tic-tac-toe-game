@@ -74,7 +74,7 @@ func (repo *RoomRepo) FindById(ctx context.Context, id uint64) (*common.Room, er
 	if err != nil {
 		return nil, err
 	}
-	return &common.Room{}, nil
+	return &room, nil
 }
 
 func (repo *RoomRepo) Create(ctx context.Context, room common.Room) error {
