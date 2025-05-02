@@ -41,8 +41,8 @@ func (service *RoomService) GetAll(ctx context.Context) []*common.RoomResponse {
 	return roomsResponse
 }
 
-func (service *RoomService) GetById() *common.Room {
-	return nil
+func (service *RoomService) GetById(ctx context.Context, id uint64) (*common.Room, error) {
+	return service.repo.FindById(ctx, id)
 }
 
 func (service *RoomService) Create(ctx context.Context, form common.RoomRequest) error {

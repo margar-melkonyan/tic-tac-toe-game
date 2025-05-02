@@ -1,4 +1,4 @@
-package controller
+package http_handler
 
 import (
 	"net/http"

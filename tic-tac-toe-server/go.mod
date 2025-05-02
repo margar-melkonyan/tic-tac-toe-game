@@ -3,6 +3,7 @@ module github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git
 go 1.23.7
 
 require (
+	github.com/coder/websocket v1.8.13 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/go-chi/chi v1.5.5 // indirect
 	github.com/go-chi/chi/v5 v5.2.1 // indirect

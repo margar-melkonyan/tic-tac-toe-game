@@ -1,7 +1,10 @@
 package middleware
 
 import (
+	"bufio"
 	"context"
+	"errors"
+	"net"
 	"net/http"
 
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/common"
@@ -10,10 +13,24 @@ import (
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/service"
 )
 
+type responseWriterWrapper struct {
+	http.ResponseWriter
+}
+
+func (w *responseWriterWrapper) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if h, ok := w.ResponseWriter.(http.Hijacker); ok {
+		return h.Hijack()
+	}
+	return nil, nil, errors.New("the ResponseWriter doesn't support hijacking")
+}
+
 func AuthMiddleware(dependency *dependency.AppDependencies) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token := r.Header.Get("Authorization")
+			if r.URL.Query().Get("token") != "" {
+				token = r.URL.Query().Get("token")
+			}
 			if token == "" {
 				resp := helper.Response{}
 				resp.Message = "You should be authorized!"
@@ -37,7 +54,9 @@ func AuthMiddleware(dependency *dependency.AppDependencies) func(next http.Handl
 			ctx := context.WithValue(r.Context(), common.USER_MAIL, claims.Sub.Email)
 			ctx = context.WithValue(ctx, common.USER, user)
 			r = r.WithContext(ctx)
-			next.ServeHTTP(w, r)
+
+			wrappedWriter := &responseWriterWrapper{w}
+			next.ServeHTTP(wrappedWriter, r)
 		})
 	}
 }

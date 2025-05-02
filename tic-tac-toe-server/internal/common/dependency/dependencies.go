@@ -3,7 +3,7 @@ package dependency
 import (
 	"log/slog"
 
-	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/handler/controller"
+	http_handler "github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/handler/http"
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/repository"
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/service"
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/storage/postgres"
@@ -14,10 +14,10 @@ type GlobalRepositories struct {
 }
 
 type AppDependencies struct {
-	RoomHandler  controller.RoomHandler
-	ScoreHandler controller.ScoreHandler
-	UserHandler  controller.UserHandler
-	AuthHandler  controller.AuthHandler
+	RoomHandler  http_handler.RoomHandler
+	ScoreHandler http_handler.ScoreHandler
+	UserHandler  http_handler.UserHandler
+	AuthHandler  http_handler.AuthHandler
 	GlobalRepositories
 }
 
@@ -42,10 +42,10 @@ func NewAppDependencies() *AppDependencies {
 	userService := service.NewUserService(userRepo, scoreRepo)
 	authService := service.NewAuthService(userRepo)
 	//handlers
-	roomHandler := controller.NewRoomHandler(*roomService)
-	scoreHandler := controller.NewScoreHandler(*scoreService)
-	userHandler := controller.NewUserHandler(*userService)
-	authHandler := controller.NewAuthHandler(*authService)
+	roomHandler := http_handler.NewRoomHandler(*roomService)
+	scoreHandler := http_handler.NewScoreHandler(*scoreService)
+	userHandler := http_handler.NewUserHandler(*userService)
+	authHandler := http_handler.NewAuthHandler(*authService)
 
 	return &AppDependencies{
 		RoomHandler:  *roomHandler,

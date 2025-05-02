@@ -1,4 +1,4 @@
-package controller
+package http_handler
 
 import (
 	"encoding/json"
@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-playground/validator/v10"
+
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/common"
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/helper"
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/service"
@@ -30,7 +31,22 @@ func (h *RoomHandler) GetRooms(w http.ResponseWriter, r *http.Request) {
 	resp.ResponseWrite(w, r, http.StatusOK)
 }
 
-func (h *RoomHandler) EnterRoom(w http.ResponseWriter, r *http.Request) {}
+func (h *RoomHandler) GetRoom(w http.ResponseWriter, r *http.Request) helper.Response {
+	resp := helper.Response{}
+	param := chi.URLParam(r, "id")
+	id, err := strconv.ParseUint(param, 10, 64)
+	if err != nil {
+		resp.Errors = err
+		return resp
+	}
+	data, err := h.service.GetById(r.Context(), id)
+	if err != nil {
+		resp.Errors = err
+		return resp
+	}
+	resp.Data = data
+	return resp
+}
 
 func (h *RoomHandler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 	resp := helper.Response{}

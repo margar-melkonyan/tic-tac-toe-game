@@ -88,4 +88,13 @@ const fetchRooms = () => {
     })
 }
 fetchRooms()
+
+const ws = () => {
+  const token = `${localStorage.getItem("token")}`;
+  const z = new WebSocket(`ws://192.168.1.4:8000/api/v1/rooms/1?token=${token}`);
+  z.onopen = function() {
+
+  };
+};
+ws();
 </script>

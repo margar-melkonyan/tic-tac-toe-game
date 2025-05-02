@@ -14,6 +14,7 @@ type RoomRepo struct {
 
 type RoomRepository interface {
 	FindAll(ctx context.Context) ([]*common.Room, error)
+	FindById(ctx context.Context, id uint64) (*common.Room, error)
 	Create(ctx context.Context, room common.Room) error
 	DeleteById(ctx context.Context, id uint64) error
 }
@@ -55,6 +56,25 @@ func (repo *RoomRepo) FindAll(ctx context.Context) ([]*common.Room, error) {
 		rooms = []*common.Room{}
 	}
 	return rooms, nil
+}
+
+func (repo *RoomRepo) FindById(ctx context.Context, id uint64) (*common.Room, error) {
+	var room common.Room
+	query := "SELECT id, name, is_private, password, creator_id, capacity, created_at FROM rooms WHERE id = $1 AND deleted_at IS NULL"
+	row := repo.db.QueryRowContext(ctx, query, id)
+	err := row.Scan(
+		&room.ID,
+		&room.Name,
+		&room.IsPrivate,
+		&room.Password,
+		&room.CreatorID,
+		&room.Capacity,
+		&room.CreatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return &common.Room{}, nil
 }
 
 func (repo *RoomRepo) Create(ctx context.Context, room common.Room) error {
