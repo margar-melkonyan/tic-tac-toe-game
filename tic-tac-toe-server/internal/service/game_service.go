@@ -1,6 +1,8 @@
 package service
 
 import (
+	"bytes"
+	"encoding/json"
 	"log"
 	"log/slog"
 	"net/http"
@@ -72,6 +74,16 @@ type WSServer struct {
 
 var wsRooms map[uint64]*RoomServer
 
+type GameRequest struct {
+	Action string         `json:"action"`
+	Data   SymbolPosition `json:"data"`
+}
+
+type GameReponse struct {
+	Action string      `json:"action"`
+	Data   interface{} `json:"data"`
+}
+
 func NewWsServer() *WSServer {
 	return &WSServer{
 		Rooms: make(map[uint64]*RoomServer),
@@ -96,10 +108,37 @@ func (ws *WSServer) GameLoop(currentUser *common.User, room *common.RoomSessionR
 		slog.Warn("Received empty message")
 		return true
 	}
+	var request GameRequest
+	bytesReader := bytes.NewReader(p)
+	if err := json.NewDecoder(bytesReader).Decode(&request); err != nil {
+		slog.Error("GameRequest")
+	}
 	if ws.Rooms != nil {
 		wsRooms = ws.Rooms
 	}
-	ws.broadcastToSymbolPosition(currentUser.ID, room, p)
+	switch request.Action {
+	case "step":
+		ws.Rooms[room.ID].Positions = append(ws.Rooms[room.ID].Positions, &request.Data)
+		response := &GameReponse{
+			Action: "get positions",
+			Data: map[string]interface{}{
+				"positions": ws.Rooms[room.ID].Positions,
+			},
+		}
+		raw, err := json.Marshal(response)
+		if err == nil {
+			ws.broadcastMessageToAll(currentUser.ID, room, raw)
+		}
+	case "reset game":
+		ws.Rooms[room.ID].Positions = make([]*SymbolPosition, 0)
+		response := &GameReponse{
+			Action: "reset game",
+		}
+		raw, err := json.Marshal(response)
+		if err == nil {
+			ws.broadcastMessageToAll(currentUser.ID, room, raw)
+		}
+	}
 	return false
 }
 
@@ -138,7 +177,6 @@ func (ws *WSServer) CloseConnection(roomID uint64, conn *websocket.Conn) {
 			conn.Close()
 			user.Connection = nil
 			user.IsConnected = false
-			ws.broadcastToSymbolPosition(user.ID, &common.RoomSessionResponse{ID: roomID}, []byte(`{"message":"user disconnected"}`))
 			break
 		}
 	}
@@ -196,7 +234,7 @@ func (ws *WSServer) isRoomFull(userID uuid.UUID, roomID uint64, conn *websocket.
 	return false
 }
 
-func (ws *WSServer) broadcastToSymbolPosition(
+func (ws *WSServer) broadcastMessageToOther(
 	currentUserID uuid.UUID,
 	room *common.RoomSessionResponse,
 	raw []byte,
@@ -208,7 +246,6 @@ func (ws *WSServer) broadcastToSymbolPosition(
 		log.Printf("broadcastToSymbolPosition: room %d not found", room.ID)
 		return
 	}
-
 	for _, currentUser := range roomData.Users {
 		if currentUser.ID != currentUserID {
 			if currentUser.Connection != nil {
@@ -218,6 +255,30 @@ func (ws *WSServer) broadcastToSymbolPosition(
 				); err != nil {
 					log.Println("WriteMessage error:", err)
 				}
+			}
+		}
+	}
+}
+
+func (ws *WSServer) broadcastMessageToAll(
+	currentUserID uuid.UUID,
+	room *common.RoomSessionResponse,
+	raw []byte,
+) {
+	ws.Mu.Lock()
+	defer ws.Mu.Unlock()
+	roomData, ok := ws.Rooms[room.ID]
+	if !ok || roomData == nil {
+		log.Printf("broadcastToSymbolPosition: room %d not found", room.ID)
+		return
+	}
+	for _, currentUser := range roomData.Users {
+		if currentUser.Connection != nil {
+			if err := currentUser.Connection.WriteMessage(
+				websocket.TextMessage,
+				raw,
+			); err != nil {
+				log.Println("WriteMessage error:", err)
 			}
 		}
 	}

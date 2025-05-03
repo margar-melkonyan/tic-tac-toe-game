@@ -14,25 +14,28 @@ authStore.currentUser()
 const props = defineProps<{
   roomId: string;
 }>()
-let ws;
+let ws:WebSocket;
 function connectToRoom(id) {
   ws = new WebSocket(`ws://192.168.1.4:8000/api/v1/rooms/${id}?token=${localStorage.getItem("token")}`);
   ws.onopen = function () {
-    ws.send(`{"action": "new connection to room", "data":"{"user_id":"${authStore?.user.id}"}"}`)
+    ws.send(`{"action": "new connection to room", "user_id":"${authStore?.user.id}"}`)
   };
   ws.onerror = function (event) {
     console.error("WebSocket error observed:", event);
   };
   ws.onmessage = function (event) {
     const data = JSON.parse(event.data)
-    if (data.action == "step") {
-      console.log(data)
-      const i = data.data.id.split("-")[0]
-      const j = data.data.id.split("-")[1]
-      playerStep(i, j)
-    }
     if (data.action == "reset game") {
       resetGame()
+    }
+    if (data.action == "get positions") {
+      const positions = data.data.positions
+      positions.forEach((position) => {
+        const pos = position.id.split("-")
+        const i = pos[0]
+        const j = pos[1]
+        playerStep(i, j, position.symbol)
+      })
     }
   }
 }
@@ -47,7 +50,11 @@ const gameStarted = ref<number>(0)
 const gameEnd = ref<number>(0)
 const xCount = new Array(rowsAndColumns.value);
 const oCount = new Array(rowsAndColumns.value);
-function playerStep(i: number, j: number) {
+function makeStep(i: number, j: number) {
+  const cell = document.querySelector(`.grid-index-${i}-${j}>span`)
+  ws.send(`{"data":{"id": "${i}-${j}", "symbol": "X"}, "action": "step"}`)
+}
+function playerStep(i: number, j: number, symbol: string) {
   gameStarted.value = 1
   const cell = document.querySelector(`.grid-index-${i}-${j}>span`)
   if (wonFlag.value !== 0) {
@@ -57,13 +64,12 @@ function playerStep(i: number, j: number) {
     return
   }
   if (currentPlayer.value === 0) {
-    cell.textContent = 'O'
+    cell.textContent = symbol
     currentPlayer.value = 1
   } else {
-    cell.textContent = 'X'
+    cell.textContent = symbol
     currentPlayer.value = 0
   }
-  ws.send(`{"data":{"id": "${i}-${j}", "symbol": "${cell?.textContent}"}, "action": "step"}`)
   resetCounting()
   verticalCheck()
   if (wonFlag.value === 0) {
@@ -181,6 +187,9 @@ function checkDraw() {
     wonFlag.value = -2
   }
 }
+function doResetGame() {
+  ws.send(`{"action": "reset game"}`)
+}
 function resetGame() {
   gameStarted.value = 0
   currentPlayer.value = 0
@@ -239,7 +248,7 @@ function getFontStyle() {
             :key="j"
             :class="`grid-index-${i}-${j}`"
             :style="getCellStyle()"
-            @click="playerStep(i, j)"
+            @click="makeStep(i, j)"
           >
             <span
               class="no-select"
@@ -316,7 +325,7 @@ function getFontStyle() {
         <v-btn
           class="mt-4"
           color="primary"
-          @click="resetGame"
+          @click="doResetGame"
         >
           🔄 Начать заново
         </v-btn>
