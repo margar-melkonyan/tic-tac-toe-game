@@ -40,7 +40,7 @@
             {{ $t('close') }}
           </v-btn>
         </v-col>
-        <v-col class="d-flex justify-end py-0" @click="connectToRoom(room.id)">
+        <v-col class="d-flex justify-end py-0" @click="openRoom(room.id)">
           <v-btn>
             {{ $t('enter') }}
           </v-btn>
@@ -53,6 +53,8 @@
 <script lang="ts" setup>
 import { ref, defineEmits } from 'vue';
 import { useAuthStore } from '@/stores/auth';
+// import GameRoom from './GameRoom.vue';
+const router = useRouter()
 const isHiddePassword = ref(true);
 const emit = defineEmits([
   "openLoginDialog"
@@ -74,20 +76,14 @@ function openRoom() {
     emit("openLoginDialog")
     return
   }
+  router.push({
+    name: 'rooms.game',
+    params: { id: props.room.id, room: props.room},
+  })
   enterRoom.value = true
 }
 function closeRoom() {
   enterRoom.value = false
-}
-function connectToRoom(id) {
-  const token = `${localStorage.getItem("token")}`;
-  const ws = new WebSocket(`ws://192.168.1.4:8000/api/v1/rooms/${id}?token=${token}`);
-  ws.onopen = function () {
-
-  };
-  ws.onerror = function (event) {
-    console.error("WebSocket error observed:", event);
-  };
 }
 const showPassword = () => {
   isHiddePassword.value = !isHiddePassword.value

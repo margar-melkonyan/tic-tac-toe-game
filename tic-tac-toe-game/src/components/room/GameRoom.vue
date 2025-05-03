@@ -1,0 +1,335 @@
+<script setup lang="ts">
+import {getCurrentInstance, ref} from 'vue';
+import axios from "axios";
+import {useAuthStore} from "@/stores/auth";
+const { proxy } = getCurrentInstance();
+const apiRooms = proxy.$api.rooms;
+/*
+ *  X - 0
+ *  O - 1
+ */
+const roomInfo = ref(null)
+const authStore = useAuthStore()
+authStore.currentUser()
+const props = defineProps<{
+  roomId: string;
+}>()
+let ws;
+function connectToRoom(id) {
+  ws = new WebSocket(`ws://192.168.1.4:8000/api/v1/rooms/${id}?token=${localStorage.getItem("token")}`);
+  ws.onopen = function () {
+    ws.send(`{"action": "new connection to room", "data":"{"user_id":"${authStore?.user.id}"}"}`)
+  };
+  ws.onerror = function (event) {
+    console.error("WebSocket error observed:", event);
+  };
+  ws.onmessage = function (event) {
+    const step = JSON.parse(event.data).data
+    const i = step.id.split("-")[0]
+    const j = step.id.split("-")[1]
+    playerStep(i, j)
+  }
+}
+connectToRoom(props.roomId)
+axios.get(apiRooms.urls.roomInfo(props.roomId)).then(({data}) => {
+  roomInfo.value = data.data
+})
+const rowsAndColumns = ref<number>(3);
+const currentPlayer = ref<number>(0);
+const wonFlag = ref<number>(0)
+const gameStarted = ref<number>(0)
+const gameEnd = ref<number>(0)
+const xCount = new Array(rowsAndColumns.value);
+const oCount = new Array(rowsAndColumns.value);
+function playerStep(i: number, j: number) {
+  gameStarted.value = 1
+  const cell = document.querySelector(`.grid-index-${i}-${j}>span`)
+  if (wonFlag.value !== 0) {
+    return
+  }
+  if (cell?.textContent === 'O' || cell?.textContent === 'X') {
+    return
+  }
+  if (currentPlayer.value === 0) {
+    cell.textContent = 'O'
+    currentPlayer.value = 1
+  } else {
+    cell.textContent = 'X'
+    currentPlayer.value = 0
+  }
+  ws.send(`{"data":{"id": "${i}-${j}", "symbol": "${cell?.textContent}"}}`)
+  resetCounting()
+  verticalCheck()
+  if (wonFlag.value === 0) {
+    resetCounting()
+    horizontalCheck()
+  }
+  if (wonFlag.value === 0) {
+    resetCounting()
+    mainDiagonalCheck()
+  }
+  if (wonFlag.value === 0) {
+    resetCounting()
+    sideDiagonalCheck()
+  }
+  checkDraw()
+}
+function resetCounting() {
+  xCount.fill(0);
+  oCount.fill(0);
+}
+function mainDiagonalCheck() {
+  for (let i = 1; i <= rowsAndColumns.value; i++) {
+    const cell = document.querySelector(`.grid-index-${i}-${i}`)
+
+    if (cell?.textContent === 'O') {
+      oCount[i - 1] += 1
+    }
+
+    if (cell?.textContent === 'X') {
+      xCount[i - 1] += 1
+    }
+  }
+
+  diagonalChecker()
+}
+function sideDiagonalCheck() {
+  for (let i = 0; i < rowsAndColumns.value; i++) {
+    const cell = document.querySelector(`.grid-index-${i + 1}-${rowsAndColumns.value - i}`)
+
+    if (cell?.textContent === 'O') {
+      oCount[i] += 1
+    }
+
+    if (cell?.textContent === 'X') {
+      xCount[i] += 1
+    }
+  }
+
+  diagonalChecker()
+}
+function diagonalChecker() {
+  if (xCount.reduce((x, y) => x + y) === rowsAndColumns.value) {
+    wonFlag.value = 1
+  }
+
+  if (oCount.reduce((x, y) => x + y) === rowsAndColumns.value) {
+    wonFlag.value = -1
+  }
+}
+function horizontalCheck() {
+  for (let i = 1; i <= rowsAndColumns.value; i++) {
+    for (let j = 1; j <= rowsAndColumns.value; ++j) {
+      const cell = document.querySelector(`.grid-index-${i}-${j}`)
+
+      if (cell?.textContent === 'O') {
+        oCount[j - 1] += 1
+      }
+
+      if (cell?.textContent === 'X') {
+        xCount[j - 1] += 1
+      }
+    }
+  }
+
+  lineChecker()
+}
+function verticalCheck() {
+  for (let i = 1; i <= rowsAndColumns.value; i++) {
+    for (let j = 1; j <= rowsAndColumns.value; ++j) {
+      const cell = document.querySelector(`.grid-index-${i}-${j}`)
+
+      if (cell?.textContent === 'O') {
+        oCount[i - 1] += 1
+      }
+
+      if (cell?.textContent === 'X') {
+        xCount[i - 1] += 1
+      }
+    }
+  }
+
+  lineChecker()
+}
+function lineChecker() {
+  if (Math.max.apply(null, xCount) === rowsAndColumns.value) {
+    wonFlag.value = 1
+  }
+
+  if (Math.max.apply(null, oCount) === rowsAndColumns.value) {
+    wonFlag.value = -1
+  }
+}
+function checkDraw() {
+  gameEnd.value = 0
+  for (let i = 1; i <= rowsAndColumns.value; i++) {
+    for (let j = 1; j <= rowsAndColumns.value; ++j) {
+      const cell = document.querySelector(`.grid-index-${i}-${j}`)
+      if (cell?.textContent !== '') {
+        gameEnd.value += 1
+      }
+    }
+  }
+
+  if (gameEnd.value === rowsAndColumns.value * rowsAndColumns.value) {
+    wonFlag.value = -2
+  }
+}
+function resetGame() {
+  gameStarted.value = 0
+  currentPlayer.value = 0
+  wonFlag.value = 0
+  resetCounting()
+  const grid = document.querySelectorAll('[class^="grid-index-"]>span')
+
+  grid.forEach((cell) => {
+    cell.textContent = ''
+  })
+}
+function getCellStyle() {
+  return {
+    flex: '1',
+    aspectRatio: '1',
+    border: '1px solid black',
+    backgroundColor: 'white',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+  };
+}
+function getFontStyle() {
+  const base = 300;
+  const size = Math.floor(base / rowsAndColumns.value);
+  return {
+    color: 'black',
+    fontSize: `${size}px`,
+  };
+}
+</script>
+
+<template>
+  <v-col>
+    <v-row>
+      <v-col cols="12">
+        <pre>
+          {{ authStore.user  }}
+        </pre>
+        <pre>
+          {{ roomInfo?.users }}
+        </pre>
+      </v-col>
+      <v-divider class="my-4" />
+    </v-row>
+    <v-row class="d-flex justify-center">
+      <div style="display: flex; flex-direction: column; width: 100%; max-width: 600px;">
+        <div
+          v-for="i in rowsAndColumns"
+          :key="i"
+          style="display: flex; width: 100%;"
+        >
+          <div
+            v-for="j in rowsAndColumns"
+            :key="j"
+            :class="`grid-index-${i}-${j}`"
+            :style="getCellStyle()"
+            @click="playerStep(i, j)"
+          >
+            <span
+              class="no-select"
+              :style="getFontStyle()"
+            />
+          </div>
+        </div>
+      </div>
+    </v-row>
+    <v-row
+      v-if="gameStarted === 0"
+      class="d-flex justify-center"
+    >
+      <v-col cols="1">
+        <v-btn
+          color="red"
+          block
+          :disabled="rowsAndColumns === 3"
+          @click="--rowsAndColumns"
+        >
+          <v-icon>
+            mdi-minus
+          </v-icon>
+        </v-btn>
+      </v-col>
+      <v-col cols="1">
+        <v-btn
+          color="green"
+          block
+          :disabled="rowsAndColumns === 10"
+          @click="++rowsAndColumns"
+        >
+          <v-icon>
+            mdi-plus
+          </v-icon>
+        </v-btn>
+      </v-col>
+    </v-row>
+    <v-row
+      v-if="wonFlag !== 0"
+      class="d-flex justify-center mt-6"
+    >
+      <v-col
+        cols="12"
+        class="text-center"
+        style="max-width: 500px"
+      >
+        <v-alert
+          v-if="wonFlag === -1"
+          type="success"
+          colored-border
+          elevation="2"
+        >
+          🟢 Победил первый игрок (О)
+        </v-alert>
+
+        <v-alert
+          v-if="wonFlag === 1"
+          type="info"
+          colored-border
+          elevation="2"
+        >
+          🔵 Победил второй игрок (X)
+        </v-alert>
+
+        <v-alert
+          v-if="wonFlag === -2"
+          type="warning"
+          colored-border
+          elevation="2"
+        >
+          ⚪ Ничья
+        </v-alert>
+        <v-btn
+          class="mt-4"
+          color="primary"
+          @click="resetGame"
+        >
+          🔄 Начать заново
+        </v-btn>
+      </v-col>
+    </v-row>
+  </v-col>
+</template>
+
+<style>
+.game-cell > span {
+  font-size: 2.5vw;
+  color: black;
+}
+.no-select::-moz-selection {
+  background: transparent;
+  color: inherit;
+}
+.no-select::-webkit-selection {
+  background: transparent;
+  color: inherit;
+}
+</style>

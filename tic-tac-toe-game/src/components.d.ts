@@ -10,6 +10,7 @@ declare module 'vue' {
     AppFooter: typeof import('./components/AppFooter.vue')['default']
     CreateRoomDialog: typeof import('./components/room/CreateRoomDialog.vue')['default']
     FormDialog: typeof import('./components/auth/FormDialog.vue')['default']
+    GameRoom: typeof import('./components/room/GameRoom.vue')['default']
     HelloWorld: typeof import('./components/HelloWorld.vue')['default']
     RoomCard: typeof import('./components/room/RoomCard.vue')['default']
     RoomList: typeof import('./components/room/RoomList.vue')['default']

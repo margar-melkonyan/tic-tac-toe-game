@@ -34,7 +34,7 @@ type User struct {
 type UserResponse struct {
 	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
-	Email     string    `json:"email"`
+	Email     string    `json:"email,omitempty"`
 	WonScore  *uint     `json:"current_won_score,omitempty"`
-	CreatedAt time.Time `json:"created_at"`
+	CreatedAt time.Time `json:"created_at,omitempty"`
 }

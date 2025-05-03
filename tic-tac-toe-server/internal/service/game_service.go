@@ -1,7 +1,6 @@
 package service
 
 import (
-	"encoding/json"
 	"log"
 	"log/slog"
 	"net/http"
@@ -71,9 +70,7 @@ type WSServer struct {
 	Mu    sync.Mutex
 }
 
-type GameResponse struct {
-	Data string `json:"data"`
-}
+var wsRooms map[uint64]*RoomServer
 
 func NewWsServer() *WSServer {
 	return &WSServer{
@@ -81,35 +78,44 @@ func NewWsServer() *WSServer {
 	}
 }
 
-func (ws *WSServer) GameLoop(currentUser *common.User, room *common.Room, conn *websocket.Conn) bool {
-	if ws.isRoomFull(currentUser.ID, room.ID) {
+func GetCurrentRoomInfo(roomID uint64) *RoomServer {
+	return wsRooms[roomID]
+}
+
+func (ws *WSServer) GameLoop(currentUser *common.User, room *common.RoomSessionResponse, conn *websocket.Conn) bool {
+	if ws.isRoomFull(currentUser.ID, room.ID, conn) {
 		return true
 	}
-	ws.RefreshConnection(currentUser, room, conn)
 	ws.addUser(currentUser, room, conn)
-
 	_, p, err := conn.ReadMessage()
 	if err != nil {
-		log.Println("ReadMessage error:", err)
-		return true
+		slog.Error("ReadMessage error:", slog.String("error", err.Error()))
+		return false
 	}
-	resp := GameResponse{
-		Data: string(p),
+	if len(p) == 0 {
+		slog.Warn("Received empty message")
+		return false
 	}
-	raw, err := json.Marshal(resp)
-	if err != nil {
-		slog.Error(err.Error())
-		return true
+	if ws.Rooms != nil {
+		wsRooms = ws.Rooms
 	}
-	ws.broadcastToSymbolPosition(currentUser.ID, room, raw)
+	ws.broadcastToSymbolPosition(currentUser.ID, room, p)
 	return false
 }
 
-func (ws *WSServer) RefreshConnection(currentUser *common.User, room *common.Room, conn *websocket.Conn) {
+func (ws *WSServer) RefreshConnection(currentUser *common.User, room *common.RoomSessionResponse, conn *websocket.Conn) {
+	if currentUser == nil {
+		slog.Error("currentUser  is nil")
+		return
+	}
+	if room == nil {
+		slog.Error("room is nil")
+		return
+	}
 	if ws.isUserInRoom(currentUser.ID, room.ID) {
 		for _, user := range ws.Rooms[room.ID].Users {
 			if user.ID == currentUser.ID {
-				user.Connection = conn // Обновляем соединение
+				user.Connection = conn
 				user.IsConnected = true
 				break
 			}
@@ -118,16 +124,27 @@ func (ws *WSServer) RefreshConnection(currentUser *common.User, room *common.Roo
 }
 
 func (ws *WSServer) CloseConnection(roomID uint64, conn *websocket.Conn) {
-	for _, user := range ws.Rooms[roomID].Users {
+	ws.Mu.Lock()
+	defer ws.Mu.Unlock()
+
+	room, exists := ws.Rooms[roomID]
+	if !exists || room == nil {
+		slog.Warn("attempted to close connection for non-existent room", slog.Uint64("room_id", roomID))
+		return
+	}
+
+	for _, user := range room.Users {
 		if user.Connection == conn {
-			user.Connection.Close()
+			conn.Close()
+			user.Connection = nil
 			user.IsConnected = false
+			ws.broadcastToSymbolPosition(user.ID, &common.RoomSessionResponse{ID: roomID}, []byte(`{"message":"user disconnected"}`))
 			break
 		}
 	}
 }
 
-func (ws *WSServer) addUser(currentUser *common.User, room *common.Room, conn *websocket.Conn) {
+func (ws *WSServer) addUser(currentUser *common.User, room *common.RoomSessionResponse, conn *websocket.Conn) {
 	ws.Mu.Lock()
 	defer ws.Mu.Unlock()
 
@@ -145,7 +162,7 @@ func (ws *WSServer) addUser(currentUser *common.User, room *common.Room, conn *w
 				ID:          currentUser.ID,
 				Name:        currentUser.Name,
 				Symbol:      "",
-				Connection:  conn, // Сохраняем текущее соединение
+				Connection:  conn,
 				IsConnected: true,
 			},
 		)
@@ -165,11 +182,14 @@ func (ws *WSServer) isUserInRoom(userID uuid.UUID, roomID uint64) bool {
 	return false
 }
 
-func (ws *WSServer) isRoomFull(userID uuid.UUID, roomID uint64) bool {
+func (ws *WSServer) isRoomFull(userID uuid.UUID, roomID uint64, conn *websocket.Conn) bool {
 	if ws.Rooms[roomID] != nil && len(ws.Rooms[roomID].Users) == 2 && !ws.isUserInRoom(userID, roomID) {
 		err := ws.Rooms[roomID].Users[0].Connection.WriteMessage(websocket.CloseMessage, []byte(`{"error":"room is full"}`))
 		if err != nil {
-			slog.Error("Error sending room full message:", err)
+			slog.Error(
+				"Error sending room full message:",
+				slog.String("error", err.Error()),
+			)
 		}
 		return true
 	}
@@ -178,10 +198,18 @@ func (ws *WSServer) isRoomFull(userID uuid.UUID, roomID uint64) bool {
 
 func (ws *WSServer) broadcastToSymbolPosition(
 	currentUserID uuid.UUID,
-	room *common.Room,
+	room *common.RoomSessionResponse,
 	raw []byte,
 ) {
-	for _, currentUser := range ws.Rooms[room.ID].Users {
+	ws.Mu.Lock()
+	defer ws.Mu.Unlock()
+	roomData, ok := ws.Rooms[room.ID]
+	if !ok || roomData == nil {
+		log.Printf("broadcastToSymbolPosition: room %d not found", room.ID)
+		return
+	}
+
+	for _, currentUser := range roomData.Users {
 		if currentUser.ID != currentUserID {
 			if currentUser.Connection != nil {
 				if err := currentUser.Connection.WriteMessage(

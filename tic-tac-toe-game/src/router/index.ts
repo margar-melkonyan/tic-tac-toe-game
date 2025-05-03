@@ -5,13 +5,30 @@
  */
 
 // Composables
+import Index from '@/pages/index.vue'
+import Room from '@/pages/room.vue'
 import { createRouter, createWebHistory } from 'vue-router/auto'
-import { setupLayouts } from 'virtual:generated-layouts'
-import { routes } from 'vue-router/auto-routes'
+// import { setupLayouts } from 'virtual:generated-layouts'
+
+const routes = [
+  {
+    path: '/',
+    name: 'index',
+    component: Index,
+  },
+  {
+    path: '/rooms/:id',
+    name: 'rooms.game',
+    component:Room,
+    props: (route) => ({
+      room: route.params.room
+    })
+  }
+]
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes: setupLayouts(routes),
+  routes,
 })
 
 // Workaround for https://github.com/vitejs/vite/issues/11804

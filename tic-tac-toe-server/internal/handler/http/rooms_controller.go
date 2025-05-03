@@ -31,7 +31,7 @@ func (h *RoomHandler) GetRooms(w http.ResponseWriter, r *http.Request) {
 	resp.ResponseWrite(w, r, http.StatusOK)
 }
 
-func (h *RoomHandler) GetRoom(w http.ResponseWriter, r *http.Request) helper.Response {
+func (h *RoomHandler) GetRoomInfo(r *http.Request) helper.Response {
 	resp := helper.Response{}
 	param := chi.URLParam(r, "id")
 	id, err := strconv.ParseUint(param, 10, 64)
@@ -48,6 +48,11 @@ func (h *RoomHandler) GetRoom(w http.ResponseWriter, r *http.Request) helper.Res
 	return resp
 }
 
+func (h *RoomHandler) GetRoom(w http.ResponseWriter, r *http.Request) {
+	resp := h.GetRoomInfo(r)
+	resp.ResponseWrite(w, r, http.StatusOK)
+}
+
 func (h *RoomHandler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 	resp := helper.Response{}
 	if resp.IsValidMediaType(w, r) {
@@ -57,7 +62,7 @@ func (h *RoomHandler) CreateRoom(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, 10<<20)
 	err := json.NewDecoder(r.Body).Decode(&form)
 	if err != nil {
-		slog.Error("Error decoding JSON: " + err.Error())
+		slog.Error("Error decoding JSON: ", slog.String("error", err.Error()))
 		resp.ResponseWrite(w, r, http.StatusBadRequest)
 		return
 	}

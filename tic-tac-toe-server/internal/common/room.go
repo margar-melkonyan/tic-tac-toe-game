@@ -30,5 +30,13 @@ type RoomResponse struct {
 	Name      string `json:"name"`
 	IsPrivate *bool  `json:"is_private"`
 	Capacity  uint8  `json:"capacity"`
-	PlayerIn  uint8  `json:"player_in"`
+	PlayerIn  int    `json:"player_in"`
+}
+
+type RoomSessionResponse struct {
+	ID        uint64          `json:"id"`
+	Name      string          `json:"name"`
+	IsPrivate *bool           `json:"is_private,omitempty"`
+	Capacity  uint8           `json:"capacity"`
+	Users     []*UserResponse `json:"users"`
 }
