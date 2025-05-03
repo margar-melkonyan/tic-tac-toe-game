@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/common"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // rooms{
@@ -124,6 +125,7 @@ func (ws *WSServer) GameLoop(currentUser *common.User, room *common.RoomSessionR
 		room,
 		request,
 		p,
+		conn,
 	)
 
 	return false
@@ -174,6 +176,7 @@ func (ws *WSServer) proccessCommand(
 	room *common.RoomSessionResponse,
 	request GameRequest,
 	message []byte,
+	conn *websocket.Conn,
 ) {
 	switch request.Action {
 	case "step":
@@ -200,10 +203,20 @@ func (ws *WSServer) proccessCommand(
 	case "resize":
 		ws.broadcastMessageToOther(currentUser.ID, room, message)
 	case "new connection to room":
-		if request.Password != "" {
-			fmt.Println(request.Password, room.Password)
+		if room.IsPrivate != nil {
+			err := bcrypt.CompareHashAndPassword([]byte(room.Password), []byte(request.Password))
+			if err != nil {
+				conn.WriteMessage(
+					websocket.CloseMessage,
+					websocket.FormatCloseMessage(websocket.CloseNormalClosure, "password is not valid"),
+				)
+				ws.CloseConnection(room.ID, conn)
+			}
 		}
-		ws.broadcastMessageToOther(currentUser.ID, room, message)
+		ws.broadcastMessageToOther(currentUser.ID, room, []byte(fmt.Sprintf(
+			`{"action":"new connection to room", "user_id": "%v"}`,
+			currentUser.ID,
+		)))
 	}
 }
 

@@ -49,6 +49,7 @@ import HeaderComponent from './HeaderComponent.vue';
 import GameBoardComponent from './GameBoardComponent.vue';
 import GameControlsComponent from './GameControlsComponent.vue';
 import GameResultComponent from './GameResultComponent.vue';
+import { toast } from "vue3-toastify";
 
 const { proxy } = getCurrentInstance();
 const apiRooms = proxy.$api.rooms;
@@ -80,6 +81,9 @@ function connectToRoom(id: string, password: string) {
   ws.onerror = (event) => {
     console.error("WebSocket error observed:", event);
   };
+  ws.onclose = (event) => {
+    toast.error(event.reason)
+  };
   ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
     switch(data.action) {
@@ -106,13 +110,12 @@ function connectToRoom(id: string, password: string) {
     }
   };
 }
-
-connectToRoom(props.roomId, "");
-
+if (!isPrivate.value) {
+  connectToRoom(props.roomId, "");
+}
 const versus = computed(() => {
   return roomInfo.value?.users?.filter((user) => user.name != authStore.user?.name)[0]?.name || null;
 });
-
 const versusFetchInterval = ref<number>(0);
 versusFetchInterval.value = window.setInterval(() => {
   if (!versus.value) {
@@ -121,9 +124,7 @@ versusFetchInterval.value = window.setInterval(() => {
     clearInterval(versusFetchInterval.value);
   }
 }, 2000);
-
 authStore.currentUser();
-
 async function fetchRoom() {
   try {
     const { data } = await axios.get(apiRooms.urls.roomInfo(props.roomId));
@@ -133,14 +134,12 @@ async function fetchRoom() {
     console.error("Failed to fetch room info:", err);
   }
 }
-
 function makeStep(i: number, j: number) {
   const cell = document.querySelector(`.grid-index-${i}-${j}>span`);
   if (cell && cell.textContent === '' && wonFlag.value === 0 && versus.value !== null) {
     ws.send(`{"data":{"id": "${i}-${j}", "symbol": "X"}, "action": "step"}`);
   }
 }
-
 function playerStep(i: number, j: number, symbol: string) {
   gameStarted.value = 1;
   const cell = document.querySelector(`.grid-index-${i}-${j}>span`);
@@ -170,19 +169,16 @@ function playerStep(i: number, j: number, symbol: string) {
   }
   checkDraw();
 }
-
 function resetCounting() {
   xCount.fill(0);
   oCount.fill(0);
 }
-
 function resizeCountingArrays() {
   xCount.length = rowsAndColumns.value;
   oCount.length = rowsAndColumns.value;
   xCount.fill(0);
   oCount.fill(0);
 }
-
 function mainDiagonalCheck() {
   for (let i = 1; i <= rowsAndColumns.value; i++) {
     const cell = document.querySelector(`.grid-index-${i}-${i}>span`);
@@ -192,7 +188,6 @@ function mainDiagonalCheck() {
   }
   diagonalChecker();
 }
-
 function sideDiagonalCheck() {
   for (let i = 0; i < rowsAndColumns.value; i++) {
     const cell = document.querySelector(`.grid-index-${i + 1}-${rowsAndColumns.value - i}>span`);
@@ -202,7 +197,6 @@ function sideDiagonalCheck() {
   }
   diagonalChecker();
 }
-
 function diagonalChecker() {
   if (xCount.reduce((a, b) => a + b, 0) === rowsAndColumns.value) {
     wonFlag.value = 1;
@@ -211,7 +205,6 @@ function diagonalChecker() {
     wonFlag.value = -1;
   }
 }
-
 function horizontalCheck() {
   for (let i = 1; i <= rowsAndColumns.value; i++) {
     for (let j = 1; j <= rowsAndColumns.value; ++j) {
@@ -223,7 +216,6 @@ function horizontalCheck() {
   }
   lineChecker();
 }
-
 function verticalCheck() {
   for (let i = 1; i <= rowsAndColumns.value; i++) {
     for (let j = 1; j <= rowsAndColumns.value; ++j) {
@@ -235,7 +227,6 @@ function verticalCheck() {
   }
   lineChecker();
 }
-
 function lineChecker() {
   if (Math.max(...xCount) === rowsAndColumns.value) {
     wonFlag.value = 1;
@@ -244,7 +235,6 @@ function lineChecker() {
     wonFlag.value = -1;
   }
 }
-
 function checkDraw() {
   gameEnd.value = 0;
   for (let i = 1; i <= rowsAndColumns.value; i++) {
@@ -259,11 +249,9 @@ function checkDraw() {
     wonFlag.value = -2;
   }
 }
-
 function doResetGame() {
   ws.send(`{"action": "reset game"}`);
 }
-
 function resetGame() {
   gameStarted.value = 0;
   currentPlayer.value = 0;
@@ -271,14 +259,12 @@ function resetGame() {
   resetCounting();
   resetGameBoardCells();
 }
-
 function resetGameBoardCells() {
   const gridSpans = document.querySelectorAll('[class^="grid-index-"] > span');
   gridSpans.forEach(span => {
     span.textContent = '';
   });
 }
-
 function getCellStyle() {
   return {
     flex: '1',
@@ -291,7 +277,6 @@ function getCellStyle() {
     cursor: 'pointer',
   };
 }
-
 function getFontStyle() {
   const base = 300;
   const size = Math.floor(base / rowsAndColumns.value);
@@ -300,7 +285,6 @@ function getFontStyle() {
     fontSize: `${size}px`,
   };
 }
-
 function resizeBoard(size: number) {
   rowsAndColumns.value += size;
   resizeCountingArrays();

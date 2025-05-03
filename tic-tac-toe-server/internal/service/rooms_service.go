@@ -35,13 +35,15 @@ func (service *RoomService) GetAll(ctx context.Context) []*common.RoomResponse {
 		if roomInfo != nil {
 			playerIn = len(roomInfo.Users)
 		}
-		roomsResponse = append(roomsResponse, &common.RoomResponse{
-			ID:        room.ID,
-			Name:      room.Name,
-			Capacity:  room.Capacity,
-			IsPrivate: &room.IsPrivate,
-			PlayerIn:  playerIn,
-		})
+		if playerIn != 2 {
+			roomsResponse = append(roomsResponse, &common.RoomResponse{
+				ID:        room.ID,
+				Name:      room.Name,
+				Capacity:  room.Capacity,
+				IsPrivate: &room.IsPrivate,
+				PlayerIn:  playerIn,
+			})
+		}
 	}
 	if err != nil {
 		slog.Error(
