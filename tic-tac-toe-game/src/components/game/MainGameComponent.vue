@@ -44,6 +44,7 @@
 import { getCurrentInstance, ref, computed } from 'vue';
 import axios from "axios";
 import { useAuthStore } from "@/stores/auth";
+import { useRouter } from "vue-router"
 
 import HeaderComponent from './HeaderComponent.vue';
 import GameBoardComponent from './GameBoardComponent.vue';
@@ -55,6 +56,7 @@ const { proxy } = getCurrentInstance();
 const apiRooms = proxy.$api.rooms;
 
 const authStore = useAuthStore();
+const router = useRouter();
 
 const roomInfo = ref(null);
 const rowsAndColumns = ref<number>(3);
@@ -63,6 +65,7 @@ const wonFlag = ref<number>(0);
 const gameStarted = ref<number>(0);
 const gameEnd = ref<number>(0);
 const isPrivate = ref<boolean>(false);
+const wssIsSuccess = ref<boolean>(false);
 
 const xCount = new Array(rowsAndColumns.value).fill(0);
 const oCount = new Array(rowsAndColumns.value).fill(0);
@@ -77,12 +80,22 @@ function connectToRoom(id: string, password: string) {
   ws = new WebSocket(`${apiRooms.urls.room(id).replace("http", "ws")}?token=${localStorage.getItem("token")}`);
   ws.onopen = () => {
     ws.send(`{"action": "new connection to room", "password": "${password}"}`);
+    wssIsSuccess.value = true;
+    isPrivate.value = false;
   };
   ws.onerror = (event) => {
     console.error("WebSocket error observed:", event);
   };
   ws.onclose = (event) => {
-    toast.error(event.reason)
+    toast.error(event.reason);
+    if(event.code === 1013) {
+      versusFetchInterval.value = 0
+      router.push({ "name": "index" })
+    }
+    if (event.code === 1008) {
+      wssIsSuccess.value = false;
+      isPrivate.value = true;
+    }
   };
   ws.onmessage = (event) => {
     const data = JSON.parse(event.data);
@@ -129,7 +142,9 @@ async function fetchRoom() {
   try {
     const { data } = await axios.get(apiRooms.urls.roomInfo(props.roomId));
     roomInfo.value = data.data;
-    isPrivate.value = roomInfo.value.is_private
+    if (!wssIsSuccess.value) {
+      isPrivate.value = roomInfo.value.is_private
+    }
   } catch (err) {
     console.error("Failed to fetch room info:", err);
   }

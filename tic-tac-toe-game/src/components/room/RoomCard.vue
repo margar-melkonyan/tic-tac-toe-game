@@ -34,7 +34,6 @@
 <script lang="ts" setup>
 import { ref, defineEmits } from 'vue';
 import { useAuthStore } from '@/stores/auth';
-// import GameRoom from './GameRoom.vue';
 const router = useRouter()
 const emit = defineEmits([
   "openLoginDialog"

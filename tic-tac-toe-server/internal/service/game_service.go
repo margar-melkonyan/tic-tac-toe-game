@@ -208,7 +208,7 @@ func (ws *WSServer) proccessCommand(
 			if err != nil {
 				conn.WriteMessage(
 					websocket.CloseMessage,
-					websocket.FormatCloseMessage(websocket.CloseNormalClosure, "password is not valid"),
+					websocket.FormatCloseMessage(websocket.ClosePolicyViolation, "password is not valid"),
 				)
 				ws.CloseConnection(room.ID, conn)
 			}
@@ -217,6 +217,16 @@ func (ws *WSServer) proccessCommand(
 			`{"action":"new connection to room", "user_id": "%v"}`,
 			currentUser.ID,
 		)))
+		response := &GameReponse{
+			Action: "get positions",
+			Data: map[string]interface{}{
+				"positions": ws.Rooms[room.ID].Positions,
+			},
+		}
+		raw, err := json.Marshal(response)
+		if err == nil {
+			ws.broadcastMessageToAll(currentUser.ID, room, raw)
+		}
 	}
 }
 
@@ -260,7 +270,10 @@ func (ws *WSServer) isUserInRoom(userID uuid.UUID, roomID uint64) bool {
 
 func (ws *WSServer) isRoomFull(userID uuid.UUID, roomID uint64, conn *websocket.Conn) bool {
 	if ws.Rooms[roomID] != nil && len(ws.Rooms[roomID].Users) == 2 && !ws.isUserInRoom(userID, roomID) {
-		err := ws.Rooms[roomID].Users[0].Connection.WriteMessage(websocket.CloseMessage, []byte(`{"error":"room is full"}`))
+		err := conn.WriteMessage(
+			websocket.CloseMessage,
+			websocket.FormatCloseMessage(websocket.CloseTryAgainLater, "room is full"),
+		)
 		if err != nil {
 			slog.Error(
 				"Error sending room full message:",
