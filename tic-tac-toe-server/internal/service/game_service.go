@@ -3,6 +3,7 @@ package service
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
@@ -76,13 +77,14 @@ type WSServer struct {
 var wsRooms map[uint64]*RoomServer
 
 type GameRequest struct {
-	Action string         `json:"action"`
-	Data   SymbolPosition `json:"data"`
+	Action   string         `json:"action"`
+	Data     SymbolPosition `json:"data,omitempty"`
+	Password string         `json:"password"`
 }
 
 type GameReponse struct {
 	Action string      `json:"action"`
-	Data   interface{} `json:"data"`
+	Data   interface{} `json:"data,omitempty"`
 }
 
 func NewWsServer() *WSServer {
@@ -198,6 +200,9 @@ func (ws *WSServer) proccessCommand(
 	case "resize":
 		ws.broadcastMessageToOther(currentUser.ID, room, message)
 	case "new connection to room":
+		if request.Password != "" {
+			fmt.Println(request.Password, room.Password)
+		}
 		ws.broadcastMessageToOther(currentUser.ID, room, message)
 	}
 }

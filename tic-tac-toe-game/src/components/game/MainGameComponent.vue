@@ -1,5 +1,16 @@
 <template>
   <v-col>
+    <v-dialog
+      v-model="isPrivate"
+      width="500"
+      persistent
+    >
+      <PrivatePasswordInput
+        :room-id="roomInfo?.id"
+        :room-name="roomInfo?.name"
+        :connect-to-room="connectToRoom"
+      />
+    </v-dialog>
     <v-row>
       <HeaderComponent :versus="versus" />
       <v-divider class="my-4" />
@@ -50,6 +61,7 @@ const currentPlayer = ref<number>(0);
 const wonFlag = ref<number>(0);
 const gameStarted = ref<number>(0);
 const gameEnd = ref<number>(0);
+const isPrivate = ref<boolean>(false);
 
 const xCount = new Array(rowsAndColumns.value).fill(0);
 const oCount = new Array(rowsAndColumns.value).fill(0);
@@ -60,11 +72,10 @@ const props = defineProps<{
 
 let ws: WebSocket;
 
-function connectToRoom(id: string) {
-  ws = new WebSocket(`ws://192.168.1.4:8000/api/v1/rooms/${id}?token=${localStorage.getItem("token")}`);
+function connectToRoom(id: string, password: string) {
+  ws = new WebSocket(`${apiRooms.urls.room(id).replace("http", "ws")}?token=${localStorage.getItem("token")}`);
   ws.onopen = () => {
-    console.log("WebSocket connected");
-    ws.send(`{"action": "new connection to room"}`);
+    ws.send(`{"action": "new connection to room", "password": "${password}"}`);
   };
   ws.onerror = (event) => {
     console.error("WebSocket error observed:", event);
@@ -96,7 +107,7 @@ function connectToRoom(id: string) {
   };
 }
 
-connectToRoom(props.roomId);
+connectToRoom(props.roomId, "");
 
 const versus = computed(() => {
   return roomInfo.value?.users?.filter((user) => user.name != authStore.user?.name)[0]?.name || null;
@@ -117,6 +128,7 @@ async function fetchRoom() {
   try {
     const { data } = await axios.get(apiRooms.urls.roomInfo(props.roomId));
     roomInfo.value = data.data;
+    isPrivate.value = roomInfo.value.is_private
   } catch (err) {
     console.error("Failed to fetch room info:", err);
   }
@@ -124,7 +136,7 @@ async function fetchRoom() {
 
 function makeStep(i: number, j: number) {
   const cell = document.querySelector(`.grid-index-${i}-${j}>span`);
-  if (cell && cell.textContent === '' && wonFlag.value === 0) {
+  if (cell && cell.textContent === '' && wonFlag.value === 0 && versus.value !== null) {
     ws.send(`{"data":{"id": "${i}-${j}", "symbol": "X"}, "action": "step"}`);
   }
 }

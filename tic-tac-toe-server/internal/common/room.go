@@ -37,6 +37,7 @@ type RoomSessionResponse struct {
 	ID        uint64          `json:"id"`
 	Name      string          `json:"name"`
 	CreatorID uuid.UUID       `json:"creator_id"`
+	Password  string          `json:"-"`
 	IsPrivate *bool           `json:"is_private,omitempty"`
 	Capacity  uint8           `json:"capacity"`
 	Users     []*UserResponse `json:"users"`

@@ -17,6 +17,7 @@ declare module 'vue' {
     HeaderComponent: typeof import('./components/game/HeaderComponent.vue')['default']
     HelloWorld: typeof import('./components/HelloWorld.vue')['default']
     MainGameComponent: typeof import('./components/game/MainGameComponent.vue')['default']
+    PrivatePasswordInput: typeof import('./components/game/PrivatePasswordInput.vue')['default']
     RoomCard: typeof import('./components/room/RoomCard.vue')['default']
     RoomList: typeof import('./components/room/RoomList.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

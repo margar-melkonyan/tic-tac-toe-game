@@ -72,6 +72,7 @@ func (service *RoomService) GetById(ctx context.Context, id uint64) (*common.Roo
 		ID:        room.ID,
 		Name:      room.Name,
 		CreatorID: room.CreatorID,
+		Password:  room.Password,
 		IsPrivate: &room.IsPrivate,
 		Capacity:  room.Capacity,
 		Users:     users,

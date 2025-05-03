@@ -37,7 +37,7 @@ func (service *UserService) GetCurrentUser(ctx context.Context) (*common.UserRes
 		ID:        user.ID,
 		Name:      user.Name,
 		Email:     user.Email,
-		CreatedAt: user.CreatedAt,
+		CreatedAt: &user.CreatedAt,
 		WonScore:  &currentWonScore,
 	}
 	return userResponse, nil
