@@ -62,9 +62,10 @@ type SymbolPosition struct {
 }
 
 type RoomServer struct {
-	ID        uint64            `json:"id"`
-	Users     []*ConnectedUser  `json:"users"`
-	Positions []*SymbolPosition `json:"symbol_positions"`
+	ID         uint64            `json:"id"`
+	Users      []*ConnectedUser  `json:"users"`
+	Positions  []*SymbolPosition `json:"symbol_positions"`
+	BorderSize uint64            `json:"border_size"`
 }
 
 type WSServer struct {
@@ -116,29 +117,13 @@ func (ws *WSServer) GameLoop(currentUser *common.User, room *common.RoomSessionR
 	if ws.Rooms != nil {
 		wsRooms = ws.Rooms
 	}
-	switch request.Action {
-	case "step":
-		ws.Rooms[room.ID].Positions = append(ws.Rooms[room.ID].Positions, &request.Data)
-		response := &GameReponse{
-			Action: "get positions",
-			Data: map[string]interface{}{
-				"positions": ws.Rooms[room.ID].Positions,
-			},
-		}
-		raw, err := json.Marshal(response)
-		if err == nil {
-			ws.broadcastMessageToAll(currentUser.ID, room, raw)
-		}
-	case "reset game":
-		ws.Rooms[room.ID].Positions = make([]*SymbolPosition, 0)
-		response := &GameReponse{
-			Action: "reset game",
-		}
-		raw, err := json.Marshal(response)
-		if err == nil {
-			ws.broadcastMessageToAll(currentUser.ID, room, raw)
-		}
-	}
+	ws.proccessCommand(
+		currentUser,
+		room,
+		request,
+		p,
+	)
+
 	return false
 }
 
@@ -179,6 +164,41 @@ func (ws *WSServer) CloseConnection(roomID uint64, conn *websocket.Conn) {
 			user.IsConnected = false
 			break
 		}
+	}
+}
+
+func (ws *WSServer) proccessCommand(
+	currentUser *common.User,
+	room *common.RoomSessionResponse,
+	request GameRequest,
+	message []byte,
+) {
+	switch request.Action {
+	case "step":
+		ws.Rooms[room.ID].Positions = append(ws.Rooms[room.ID].Positions, &request.Data)
+		response := &GameReponse{
+			Action: "get positions",
+			Data: map[string]interface{}{
+				"positions": ws.Rooms[room.ID].Positions,
+			},
+		}
+		raw, err := json.Marshal(response)
+		if err == nil {
+			ws.broadcastMessageToAll(currentUser.ID, room, raw)
+		}
+	case "reset game":
+		ws.Rooms[room.ID].Positions = make([]*SymbolPosition, 0)
+		response := &GameReponse{
+			Action: "reset game",
+		}
+		raw, err := json.Marshal(response)
+		if err == nil {
+			ws.broadcastMessageToAll(currentUser.ID, room, raw)
+		}
+	case "resize":
+		ws.broadcastMessageToOther(currentUser.ID, room, message)
+	case "new connection to room":
+		ws.broadcastMessageToOther(currentUser.ID, room, message)
 	}
 }
 

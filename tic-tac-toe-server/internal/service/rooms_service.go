@@ -71,6 +71,7 @@ func (service *RoomService) GetById(ctx context.Context, id uint64) (*common.Roo
 	resp := &common.RoomSessionResponse{
 		ID:        room.ID,
 		Name:      room.Name,
+		CreatorID: room.CreatorID,
 		IsPrivate: &room.IsPrivate,
 		Capacity:  room.Capacity,
 		Users:     users,

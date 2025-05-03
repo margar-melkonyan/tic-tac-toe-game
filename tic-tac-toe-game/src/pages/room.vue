@@ -1,6 +1,8 @@
 <template>
   <v-container>
-    <GameRoom :room-id="route.params.id" />
+    <MainGameComponent
+      :room-id="route.params.id"
+    />
   </v-container>
 </template>
 
