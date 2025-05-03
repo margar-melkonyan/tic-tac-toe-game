@@ -29,7 +29,10 @@ func EnterRoom(h *http_handler.RoomHandler) http.HandlerFunc {
 		if !isRoomExist {
 			err := conn.WriteMessage(
 				websocket.CloseMessage,
-				websocket.FormatCloseMessage(1011, "cannot find room"),
+				websocket.FormatCloseMessage(
+					websocket.CloseInternalServerErr,
+					"cannot find room",
+				),
 			)
 			if err != nil {
 				slog.Error(
@@ -38,13 +41,16 @@ func EnterRoom(h *http_handler.RoomHandler) http.HandlerFunc {
 				)
 			}
 			conn.Close()
-			return // Выход из функции после закрытия соединения
+			return
 		}
 
 		if !isUserExist {
 			err := conn.WriteMessage(
 				websocket.CloseMessage,
-				websocket.FormatCloseMessage(1011, "you should be authorized"),
+				websocket.FormatCloseMessage(
+					websocket.CloseInternalServerErr,
+					"you should be authorized",
+				),
 			)
 			if err != nil {
 				slog.Error(
@@ -55,10 +61,8 @@ func EnterRoom(h *http_handler.RoomHandler) http.HandlerFunc {
 			conn.Close()
 			return
 		}
-
-		ws.RefreshConnection(currentUser, room, conn)
 		defer ws.CloseConnection(room.ID, conn)
-
+		ws.RefreshConnection(currentUser, room, conn)
 		for {
 			if ws.GameLoop(currentUser, room, conn) {
 				break

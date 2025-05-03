@@ -24,10 +24,16 @@ function connectToRoom(id) {
     console.error("WebSocket error observed:", event);
   };
   ws.onmessage = function (event) {
-    const step = JSON.parse(event.data).data
-    const i = step.id.split("-")[0]
-    const j = step.id.split("-")[1]
-    playerStep(i, j)
+    const data = JSON.parse(event.data)
+    if (data.action == "step") {
+      console.log(data)
+      const i = data.data.id.split("-")[0]
+      const j = data.data.id.split("-")[1]
+      playerStep(i, j)
+    }
+    if (data.action == "reset game") {
+      resetGame()
+    }
   }
 }
 connectToRoom(props.roomId)
@@ -57,7 +63,7 @@ function playerStep(i: number, j: number) {
     cell.textContent = 'X'
     currentPlayer.value = 0
   }
-  ws.send(`{"data":{"id": "${i}-${j}", "symbol": "${cell?.textContent}"}}`)
+  ws.send(`{"data":{"id": "${i}-${j}", "symbol": "${cell?.textContent}"}, "action": "step"}`)
   resetCounting()
   verticalCheck()
   if (wonFlag.value === 0) {

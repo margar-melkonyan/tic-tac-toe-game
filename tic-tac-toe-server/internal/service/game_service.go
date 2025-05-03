@@ -90,11 +90,11 @@ func (ws *WSServer) GameLoop(currentUser *common.User, room *common.RoomSessionR
 	_, p, err := conn.ReadMessage()
 	if err != nil {
 		slog.Error("ReadMessage error:", slog.String("error", err.Error()))
-		return false
+		return true
 	}
 	if len(p) == 0 {
 		slog.Warn("Received empty message")
-		return false
+		return true
 	}
 	if ws.Rooms != nil {
 		wsRooms = ws.Rooms
@@ -114,7 +114,7 @@ func (ws *WSServer) RefreshConnection(currentUser *common.User, room *common.Roo
 	}
 	if ws.isUserInRoom(currentUser.ID, room.ID) {
 		for _, user := range ws.Rooms[room.ID].Users {
-			if user.ID == currentUser.ID {
+			if user.ID == currentUser.ID && user.Connection != conn {
 				user.Connection = conn
 				user.IsConnected = true
 				break
