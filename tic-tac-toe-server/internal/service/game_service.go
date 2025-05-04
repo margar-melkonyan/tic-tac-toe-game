@@ -203,8 +203,10 @@ func (ws *WSServer) proccessCommand(
 			ws.broadcastMessageToAll(currentUser.ID, room, raw)
 		}
 	case "resize":
-		ws.Rooms[room.ID].BorderSize = request.BorderSize
-		ws.broadcastMessageToOther(currentUser.ID, room, message)
+		if currentUser.ID == room.CreatorID {
+			ws.Rooms[room.ID].BorderSize = request.BorderSize
+			ws.broadcastMessageToOther(currentUser.ID, room, message)
+		}
 	case "new connection to room":
 		if room.IsPrivate != nil && room.Password != "" {
 			err := bcrypt.CompareHashAndPassword([]byte(room.Password), []byte(request.Password))

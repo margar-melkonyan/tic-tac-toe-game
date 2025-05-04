@@ -31,6 +31,13 @@ func (h *RoomHandler) GetRooms(w http.ResponseWriter, r *http.Request) {
 	resp.ResponseWrite(w, r, http.StatusOK)
 }
 
+func (h *RoomHandler) GetMyRooms(w http.ResponseWriter, r *http.Request) {
+	resp := helper.Response{}
+	data := h.service.GetAllMy(r.Context())
+	resp.Data = data
+	resp.ResponseWrite(w, r, http.StatusOK)
+}
+
 func (h *RoomHandler) GetRoomInfo(r *http.Request) helper.Response {
 	resp := helper.Response{}
 	param := chi.URLParam(r, "id")

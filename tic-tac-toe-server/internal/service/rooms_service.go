@@ -25,7 +25,7 @@ func NewRoomService(repoRoom repository.RoomRepository) *RoomService {
 }
 
 func (service *RoomService) GetAll(ctx context.Context) []*common.RoomResponse {
-	rooms, err := service.repo.FindAll(context.Background())
+	rooms, err := service.repo.FindAll(ctx)
 	var roomsResponse []*common.RoomResponse
 	roomsResponse = make([]*common.RoomResponse, 0)
 
@@ -36,6 +36,40 @@ func (service *RoomService) GetAll(ctx context.Context) []*common.RoomResponse {
 			playerIn = len(roomInfo.Users)
 		}
 		if playerIn != 2 {
+			roomsResponse = append(roomsResponse, &common.RoomResponse{
+				ID:        room.ID,
+				Name:      room.Name,
+				Capacity:  room.Capacity,
+				IsPrivate: &room.IsPrivate,
+				PlayerIn:  playerIn,
+			})
+		}
+	}
+	if err != nil {
+		slog.Error(
+			fmt.Sprintf("[%v:GetAll]", op),
+			slog.String("error", err.Error()),
+		)
+		return []*common.RoomResponse{}
+	}
+	return roomsResponse
+}
+
+func (service *RoomService) GetAllMy(ctx context.Context) []*common.RoomResponse {
+	currentUser, ok := ctx.Value(common.USER).(*common.User)
+	if !ok {
+		return nil
+	}
+	rooms, err := service.repo.FindAll(ctx)
+	var roomsResponse []*common.RoomResponse
+	roomsResponse = make([]*common.RoomResponse, 0)
+	for _, room := range rooms {
+		playerIn := 0
+		roomInfo := GetCurrentRoomInfo(room.ID)
+		if roomInfo != nil {
+			playerIn = len(roomInfo.Users)
+		}
+		if currentUser.ID == room.CreatorID {
 			roomsResponse = append(roomsResponse, &common.RoomResponse{
 				ID:        room.ID,
 				Name:      room.Name,
@@ -90,6 +124,9 @@ func (service *RoomService) Create(ctx context.Context, form common.RoomRequest)
 		}
 		hashedPassword := string(password)
 		form.Password = &hashedPassword
+	}
+	if *form.Password == "" {
+		*form.IsPrivate = false
 	}
 	user, ok := ctx.Value(common.USER).(*common.User)
 	if !ok {

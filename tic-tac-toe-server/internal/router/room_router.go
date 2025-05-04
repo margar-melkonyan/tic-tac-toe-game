@@ -9,5 +9,6 @@ func roomsRouterGroup(rooms chi.Router) {
 	rooms.Post("/", dependencies.RoomHandler.CreateRoom)
 	rooms.Get("/{id}/info", dependencies.RoomHandler.GetRoom)
 	rooms.Get("/{id}", ws.EnterRoom(&dependencies.RoomHandler))
+	rooms.Get("/my", dependencies.RoomHandler.GetMyRooms)
 	rooms.Delete("/{id}", dependencies.RoomHandler.DestroyRoom)
 }
