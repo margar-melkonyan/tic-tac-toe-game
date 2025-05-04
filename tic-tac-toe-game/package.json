@@ -15,6 +15,7 @@
     "@mdi/font": "7.4.47",
     "axios": "^1.8.4",
     "core-js": "^3.37.1",
+    "moment": "^2.30.1",
     "roboto-fontface": "*",
     "vform": "^2.1.2",
     "vue": "^3.4.31",

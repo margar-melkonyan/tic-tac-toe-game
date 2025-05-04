@@ -16,9 +16,20 @@
         class="d-flex justify-end"
       >
         <div>
-          <span>
-            {{ auth.user?.name }} / {{ auth.user?.email }}
-          </span>
+          <v-tooltip
+            text="При нажатии сюда можно посмотреть статистику за последние 50 игр"
+            location="bottom"
+          >
+            <template v-slot:activator="{ props }">
+              <span
+                v-bind="props"
+                style="cursor: pointer; color: #1976d2;"
+                @click="openStatistic"
+              >
+                {{ auth.user?.name }} / {{ auth.user?.email }} (Выиграно: {{ auth.user?.current_won_score }})
+              </span>
+            </template>
+          </v-tooltip>
           <v-btn
             class="ml-4"
             @click="auth.signOut()"
@@ -82,21 +93,34 @@
       @close="loginDialog = false"
     />
   </v-container>
+  <v-dialog
+    v-model="statisticDialog"
+    origin="left center"
+    max-width="500"
+    scrollable
+    persistent
+  >
+    <UserStatistic
+      @close-dialog="statisticDialog = false"
+    />
+  </v-dialog>
 </template>
 
 <script lang="ts" setup>
 import type CreateRoomDialog from "@/components/room/CreateRoomDialog.vue";
-import { ref } from "vue";
-import { useAuthStore } from "@/stores/auth";
+import {ref} from "vue";
+import {useAuthStore} from "@/stores/auth";
 import axios from "axios";
+
 const auth = useAuthStore();
-const { proxy } = getCurrentInstance();
+const {proxy} = getCurrentInstance();
 const newRoomDialog = ref<InstanceType<typeof CreateRoomDialog> | null>(null);
 const loginDialog = ref(false)
 const rooms = ref([]);
+const statisticDialog = ref<boolean>(false);
 const currentTab = ref<string>("all")
 const apiRooms = proxy.$api.rooms;
-let intervalId:number;
+let intervalId: number;
 auth.currentUser()
 const openLoginDialog = () => {
   loginDialog.value = true;
@@ -106,6 +130,9 @@ const openCreateRoomDialog = () => {
     newRoomDialog.value.createRoom();
   }
 };
+const openStatistic = () => {
+  statisticDialog.value = true
+}
 const fetchRooms = () => {
   let url;
   switch (currentTab.value) {
@@ -121,7 +148,7 @@ const fetchRooms = () => {
       rooms.value = data.data ?? []
     })
 }
-const changeTab = (tab:string) => {
+const changeTab = (tab: string) => {
   currentTab.value = tab
   fetchRooms()
 }

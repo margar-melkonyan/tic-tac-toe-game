@@ -10,7 +10,8 @@ import (
 )
 
 type GlobalRepositories struct {
-	UserRepository repository.UserRepository
+	UserRepository  repository.UserRepository
+	ScoreRepository repository.ScoreRepository
 }
 
 type AppDependencies struct {
@@ -53,7 +54,8 @@ func NewAppDependencies() *AppDependencies {
 		UserHandler:  *userHandler,
 		AuthHandler:  *authHandler,
 		GlobalRepositories: GlobalRepositories{
-			UserRepository: userRepo,
+			UserRepository:  userRepo,
+			ScoreRepository: scoreRepo,
 		},
 	}
 }

@@ -124,6 +124,7 @@ function connectToRoom(id: string, password: string) {
   ws.onclose = (event) => {
     toast.error(event.reason);
     if( event.code === 1013 ||
+        event.reason === 'connection is close' ||
         event.reason === 'cannot find room'
     ) {
       clearInterval(versusFetchIntervalId.value)
@@ -340,8 +341,24 @@ function doResetGame() {
   ws.send(`{"action": "reset game"}`);
 }
 function resetGame() {
+  const wonState = () => {
+    if (mySymbol.value === 'X' && wonFlag.value === 1) {
+      return 1
+    }
+    if (mySymbol.value === 'O' && wonFlag.value === -1) {
+      return 1
+    }
+    if (wonFlag.value === -2) {
+      return -1
+    }
+    return 0
+  }
+  ws.send(`{"action": "game end", "data": {
+    "is_won": ${wonState()},
+    "user_id": "${authStore?.user?.id}",
+    "versus_player_nickname": "${versus.value}"
+  }}`)
   gameStarted.value = 0;
-  // currentPlayer.value = 0;
   wonFlag.value = 0;
   resetCounting();
   resetGameBoardCells();
@@ -379,7 +396,9 @@ function resizeBoard(size: number) {
   ws.send(`{"action":"resize", "size": ${rowsAndColumns.value}}`);
 }
 function exitFromRoom() {
+  console.log(authStore?.user.id === roomInfo.value.creator_id)
   if (versus.value !== null && authStore?.user.id === roomInfo.value.creator_id) {
+    ws.send(`{"action": "close room"}`)
     axios.delete(apiRooms.urls.room(props.roomId))
   }
   router.push({ name: "index" })

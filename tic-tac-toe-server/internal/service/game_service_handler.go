@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/google/uuid"
@@ -163,7 +164,27 @@ func (ws *WSServer) handleGameEnd(
 	room *common.RoomSessionResponse,
 	request *GameRequest,
 ) {
+	rawGameEndJson, ok := request.Data.(map[string]interface{})
+	if ok {
+		score := &common.Score{
+			IsWon:    rawGameEndJson["is_won"].(float64),
+			UserID:   rawGameEndJson["user_id"].(string),
+			Nickname: rawGameEndJson["versus_player_nickname"].(string),
+		}
+		ws.ScoreService.scoreRepo.Create(context.Background(), score)
+	}
+}
 
+func (ws *WSServer) handleCloseRoom(
+	room *RoomServer,
+) {
+	for _, user := range room.Users {
+		ws.CloseConnection(room.ID, user.Connection)
+	}
+
+	ws.Mu.Lock()
+	defer ws.Mu.Unlock()
+	delete(ws.Rooms, room.ID)
 }
 
 func (ws *WSServer) jsonToAll(room *common.RoomSessionResponse, response interface{}) {

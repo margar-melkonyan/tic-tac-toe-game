@@ -69,8 +69,9 @@ type RoomServer struct {
 }
 
 type WSServer struct {
-	Rooms map[uint64]*RoomServer `json:"rooms"`
-	Mu    sync.Mutex
+	Rooms        map[uint64]*RoomServer `json:"rooms"`
+	ScoreService *ScoreService
+	Mu           sync.Mutex
 }
 
 var wsRooms map[uint64]*RoomServer
@@ -91,9 +92,10 @@ type GameReponse struct {
 	UserID      uuid.UUID   `json:"user_id,omitempty"`
 }
 
-func NewWsServer() *WSServer {
+func NewWsServer(scoreService *ScoreService) *WSServer {
 	return &WSServer{
-		Rooms: make(map[uint64]*RoomServer),
+		Rooms:        make(map[uint64]*RoomServer),
+		ScoreService: scoreService,
 	}
 }
 
@@ -178,6 +180,10 @@ func (ws *WSServer) CloseConnection(roomID uint64, conn *websocket.Conn) {
 
 	for _, user := range room.Users {
 		if user.Connection == conn {
+			conn.WriteMessage(
+				websocket.CloseMessage,
+				websocket.FormatCloseMessage(websocket.CloseNormalClosure, "connection is close"),
+			)
 			conn.Close()
 			user.Connection = nil
 			user.IsConnected = false
@@ -211,6 +217,13 @@ func (ws *WSServer) proccessCommand(
 			room,
 			&request,
 		)
+	case gameEndAction:
+		ws.handleGameEnd(
+			room,
+			&request,
+		)
+	case closeRoomAction:
+		ws.handleCloseRoom(ws.Rooms[room.ID])
 	case newConnectionToRoomAction:
 		ws.handleNewConnection(
 			currentUser.ID,

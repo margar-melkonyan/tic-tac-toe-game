@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/common"
@@ -27,13 +28,25 @@ func NewScoreRepository(db *sql.DB) ScoreRepository {
 }
 
 func (repo ScoreRepo) Create(ctx context.Context, score *common.Score) error {
+	query := "INSERT INTO scores (name, user_id, is_won) VALUES ($1, $2, $3)"
+	result, err := repo.db.ExecContext(ctx, query, score.Nickname, score.UserID, score.IsWon)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return errors.New("room was not created")
+	}
 	return nil
 }
 
 func (repo ScoreRepo) FindAllByUser(ctx context.Context, user *common.User) ([]*common.Score, error) {
 	var scores []*common.Score
 	query := fmt.Sprintf(
-		"SELECT id, user_id, is_won, created_at FROM %v WHERE user_id = $1 AND deleted_at IS NULL",
+		"SELECT id, name, user_id, is_won, created_at FROM %v WHERE user_id = $1 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT 50",
 		TABLE_NAME,
 	)
 	rows, err := repo.db.QueryContext(ctx, query, user.ID)
@@ -47,6 +60,7 @@ func (repo ScoreRepo) FindAllByUser(ctx context.Context, user *common.User) ([]*
 		var score common.Score
 		err := rows.Scan(
 			&score.ID,
+			&score.Nickname,
 			&score.UserID,
 			&score.IsWon,
 			&score.CreatedAt,

@@ -9,6 +9,8 @@ const selectSymbolAction = "select symbol"
 const selectedSymbolAction = "selected symbol"
 const resizeAction = "resize"
 const resetGameAction = "reset game"
+const gameEndAction = "game end"
+const closeRoomAction = "close room"
 const newConnectionToRoomAction = "new connection to room"
 
 // statuses

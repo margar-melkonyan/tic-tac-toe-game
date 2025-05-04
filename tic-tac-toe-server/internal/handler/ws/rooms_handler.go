@@ -6,14 +6,16 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/common"
-	http_handler "github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/handler/http"
+	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/common/dependency"
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/service"
 )
 
 var ws *service.WSServer
 
-func EnterRoom(h *http_handler.RoomHandler) http.HandlerFunc {
-	ws = service.NewWsServer()
+func EnterRoom(deps *dependency.AppDependencies) http.HandlerFunc {
+	ws = service.NewWsServer(
+		service.NewScoreService(deps.ScoreRepository, deps.UserRepository),
+	)
 	return func(w http.ResponseWriter, r *http.Request) {
 		conn, err := service.Upgrader.Upgrade(w, r, nil)
 		if err != nil {
@@ -23,7 +25,7 @@ func EnterRoom(h *http_handler.RoomHandler) http.HandlerFunc {
 			)
 			return
 		}
-		resp := h.GetRoomInfo(r)
+		resp := deps.RoomHandler.GetRoomInfo(r)
 		room, isRoomExist := resp.Data.(*common.RoomSessionResponse)
 		currentUser, isUserExist := r.Context().Value(common.USER).(*common.User)
 		if !isRoomExist {
