@@ -79,17 +79,18 @@ type WSServer struct {
 var wsRooms map[uint64]*RoomServer
 
 type GameRequest struct {
-	Action     string         `json:"action"`
+	Action     string         `json:"action,omitempty"`
 	Data       SymbolPosition `json:"data,omitempty"`
-	Password   string         `json:"password"`
+	Password   string         `json:"password,omitempty"`
 	BorderSize uint64         `json:"size,omitempty"`
-	Symbol     string         `json:"symbol"`
+	Symbol     string         `json:"symbol,omitempty"`
 }
 
 type GameReponse struct {
 	Action      string      `json:"action"`
 	Data        interface{} `json:"data,omitempty"`
 	BoarderSize uint64      `json:"size,omitempty"`
+	Symbol      string      `json:"symbol,omitempty"`
 }
 
 func NewWsServer() *WSServer {
@@ -119,11 +120,18 @@ func (ws *WSServer) GameLoop(currentUser *common.User, room *common.RoomSessionR
 	var request GameRequest
 	bytesReader := bytes.NewReader(p)
 	if err := json.NewDecoder(bytesReader).Decode(&request); err != nil {
-		slog.Error("GameRequest")
+		slog.Error(
+			"[wss]GameRequest",
+			slog.String("error", err.Error()),
+		)
 	}
 	if ws.Rooms != nil {
 		wsRooms = ws.Rooms
 	}
+	slog.Info(
+		"[wss]GameRequest",
+		slog.Any("data", request),
+	)
 	ws.proccessCommand(
 		currentUser,
 		room,
@@ -184,12 +192,19 @@ func (ws *WSServer) proccessCommand(
 ) {
 	switch request.Action {
 	case "step":
+		opositeSymbol := ""
+		if request.Data.Symbol == "X" {
+			opositeSymbol = "O"
+		} else {
+			opositeSymbol = "X"
+		}
 		ws.Rooms[room.ID].Positions = append(ws.Rooms[room.ID].Positions, &request.Data)
 		response := &GameReponse{
 			Action: "get positions",
 			Data: map[string]interface{}{
 				"positions": ws.Rooms[room.ID].Positions,
 			},
+			Symbol: opositeSymbol,
 		}
 		raw, err := json.Marshal(response)
 		if err == nil {
@@ -210,22 +225,30 @@ func (ws *WSServer) proccessCommand(
 			ws.broadcastMessageToOther(currentUser.ID, room, message)
 		}
 	case "select symbol":
-		ws.Mu.Lock()
-		defer ws.Mu.Unlock()
+		secondUserSymbol := ""
 		for id, user := range ws.Rooms[room.ID].Users {
+			if user.Symbol != "" {
+				continue
+			}
 			if user.ID == currentUser.ID {
 				ws.Rooms[room.ID].Users[id].Symbol = request.Symbol
 			} else {
-				symbol := ""
 				if request.Symbol == "X" {
-					symbol = "O"
+					secondUserSymbol = "O"
 				} else {
-					symbol = "X"
+					secondUserSymbol = "X"
 				}
-				ws.Rooms[room.ID].Users[id].Symbol = symbol
+				ws.Rooms[room.ID].Users[id].Symbol = secondUserSymbol
 			}
 		}
-		ws.broadcastMessageToAll(room, message)
+		resp := &GameReponse{
+			Action: "selected symbol",
+			Symbol: secondUserSymbol,
+		}
+		message, err := json.Marshal(resp)
+		if err == nil {
+			ws.broadcastMessageToOther(currentUser.ID, room, message)
+		}
 	case "new connection to room":
 		if room.IsPrivate != nil && room.Password != "" {
 			err := bcrypt.CompareHashAndPassword([]byte(room.Password), []byte(request.Password))
@@ -237,26 +260,27 @@ func (ws *WSServer) proccessCommand(
 				ws.CloseConnection(room.ID, conn)
 			}
 		}
-		ws.broadcastMessageToOther(currentUser.ID, room, []byte(fmt.Sprintf(
+		ws.broadcastMessageToAll(room, []byte(fmt.Sprintf(
 			`{"action":"new connection to room", "user_id":"%v"}`,
 			currentUser.ID,
 		)))
+		if ws.Rooms[room.ID].BorderSize == 0 {
+			ws.Rooms[room.ID].BorderSize = 3
+		}
 		response := &GameReponse{
-			Action: "get positions",
-			Data: map[string]interface{}{
-				"positions": ws.Rooms[room.ID].Positions,
-			},
+			Action:      "resize",
+			BoarderSize: ws.Rooms[room.ID].BorderSize,
 		}
 		raw, err := json.Marshal(response)
 		if err == nil {
 			ws.broadcastMessageToAll(room, raw)
 		}
-		if ws.Rooms[room.ID].BorderSize == 0 {
-			ws.Rooms[room.ID].BorderSize = 3
-		}
 		response = &GameReponse{
-			Action:      "resize",
-			BoarderSize: ws.Rooms[room.ID].BorderSize,
+			Action: "get positions",
+			Data: map[string]interface{}{
+				"positions": ws.Rooms[room.ID].Positions,
+			},
+			Symbol: ws.Rooms[room.ID].Users[0].Symbol,
 		}
 		raw, err = json.Marshal(response)
 		if err == nil {
@@ -267,7 +291,6 @@ func (ws *WSServer) proccessCommand(
 			`{"action":"choose symbol", "user_id":"%v"}`,
 			ws.Rooms[room.ID].Users[0].ID,
 		)))
-
 		if len(ws.Rooms[room.ID].Users) == 2 {
 			var prev *ConnectedUser
 			for _, user := range ws.Rooms[room.ID].Users {
@@ -278,7 +301,9 @@ func (ws *WSServer) proccessCommand(
 					} else {
 						symbol = "X"
 					}
-					prev.Symbol = symbol
+					if prev != nil {
+						prev.Symbol = symbol
+					}
 					break
 				}
 				prev = user
@@ -292,6 +317,32 @@ func (ws *WSServer) proccessCommand(
 		}
 		if len(ws.Rooms[room.ID].Users) == 2 && isAllUserSelectedSymbol == 2 {
 			ws.Rooms[room.ID].GameStatus = "in process"
+		}
+		mainSymbol := ""
+		for _, user := range ws.Rooms[room.ID].Users {
+			if user.Symbol != "" {
+				mainSymbol = user.Symbol
+			}
+			if user.Symbol == "" {
+				secondarySymbol := ""
+				if mainSymbol == "X" {
+					secondarySymbol = "O"
+				} else {
+					secondarySymbol = "X"
+				}
+
+				resp := &GameReponse{
+					Action: "sync symbol",
+					Symbol: secondarySymbol,
+				}
+				raw, err := json.Marshal(resp)
+				if err == nil {
+					user.Connection.WriteMessage(
+						websocket.TextMessage,
+						raw,
+					)
+				}
+			}
 		}
 	}
 }

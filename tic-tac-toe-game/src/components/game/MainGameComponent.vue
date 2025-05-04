@@ -38,7 +38,7 @@
       <HeaderComponent :versus="versus" />
       <v-divider class="mb-8" />
     </v-row>
-
+    {{ currentPlayer }} {{ mySymbol }}
     <v-row class="d-flex justify-center">
       <GameBoardComponent
         :rows-and-columns="rowsAndColumns"
@@ -74,6 +74,7 @@ import GameBoardComponent from './GameBoardComponent.vue';
 import GameControlsComponent from './GameControlsComponent.vue';
 import GameResultComponent from './GameResultComponent.vue';
 import { toast } from "vue3-toastify";
+import {c} from "unplugin-vue-router/types-DBiN4-4c";
 
 const { proxy } = getCurrentInstance();
 const apiRooms = proxy.$api.rooms;
@@ -84,9 +85,10 @@ const router = useRouter();
 const props = defineProps<{
   roomId: string;
 }>();
+const mySymbol = ref<string>("");
+const currentPlayer = ref<string>("");
 const roomInfo = ref(null);
 const rowsAndColumns = ref<number>(3);
-const currentPlayer = ref<number>(0);
 const wonFlag = ref<number>(0);
 const gameStarted = ref<number>(0);
 const gameEnd = ref<number>(0);
@@ -103,6 +105,10 @@ let controller:AbortController;
 let ws: WebSocket;
 
 const sendChooseSymbol = (symbol:string) => {
+  mySymbol.value = symbol
+  currentPlayer.value = symbol
+  chooseSymbolDialog.value = false
+  waitSymbolChoosing.value = false
   ws.send(`{"action": "select symbol", "symbol": "${symbol}"}`);
 }
 function connectToRoom(id: string, password: string) {
@@ -146,6 +152,7 @@ function connectToRoom(id: string, password: string) {
           const j = Number(pos[1]);
           playerStep(i, j, position.symbol);
         });
+        currentPlayer.value = data.symbol
         break;
       case "resize":
         rowsAndColumns.value = data.size;
@@ -153,11 +160,25 @@ function connectToRoom(id: string, password: string) {
         resetGameBoardCells();
         break;
       case "choose symbol":
-        if(authStore.user.id === data.user_id) {
+        if(authStore?.user?.id === data.user_id) {
           chooseSymbolDialog.value = true
         } else {
           waitSymbolChoosing.value = true
         }
+        break
+      case "selected symbol":
+        mySymbol.value = data.symbol
+        if (data.symbol === 'X') {
+          currentPlayer.value = 'O'
+        } else {
+          currentPlayer.value = 'X'
+        }
+        waitSymbolChoosing.value = false
+        break
+      case "sync symbol":
+        mySymbol.value = data.symbol
+        waitSymbolChoosing.value = false
+        break
     }
   };
 }
@@ -173,6 +194,12 @@ async function fetchRoom() {
   try {
     const { data } = await axios.get(apiRooms.urls.roomInfo(props.roomId));
     roomInfo.value = data.data;
+    const currentUser = roomInfo.value.users.filter((user) => user.id === authStore?.user?.id)[0]
+    if (currentUser?.symbol !== undefined && currentUser?.symbol !== "") {
+      mySymbol.value = currentUser?.symbol
+      chooseSymbolDialog.value = false
+      waitSymbolChoosing.value = false
+    }
     if (!wssIsSuccess.value) {
       isPrivate.value = roomInfo.value.is_private
     }
@@ -196,8 +223,11 @@ onBeforeUnmount(() => {
 })
 function makeStep(i: number, j: number) {
   const cell = document.querySelector(`.grid-index-${i}-${j}>span`);
-  if (cell && cell.textContent === '' && wonFlag.value === 0 && versus.value !== null) {
-    ws.send(`{"data":{"id": "${i}-${j}", "symbol": "X"}, "action": "step"}`);
+  if (
+    cell && cell.textContent === '' && wonFlag.value === 0 && versus.value !== null &&
+    currentPlayer.value == mySymbol.value
+  ) {
+    ws.send(`{"data":{"id": "${i}-${j}", "symbol": "${mySymbol.value}"}, "action": "step"}`);
   }
 }
 function playerStep(i: number, j: number, symbol: string) {
@@ -210,7 +240,6 @@ function playerStep(i: number, j: number, symbol: string) {
     return;
   }
   cell.textContent = symbol;
-  currentPlayer.value = currentPlayer.value === 0 ? 1 : 0;
   resetCounting();
   verticalCheck();
   if (wonFlag.value === 0) {
@@ -312,7 +341,7 @@ function doResetGame() {
 }
 function resetGame() {
   gameStarted.value = 0;
-  currentPlayer.value = 0;
+  // currentPlayer.value = 0;
   wonFlag.value = 0;
   resetCounting();
   resetGameBoardCells();
