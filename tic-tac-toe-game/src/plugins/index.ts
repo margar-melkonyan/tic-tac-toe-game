@@ -24,7 +24,7 @@ export function registerPlugins (app: App) {
     .use(pinia)
     .use(i18n)
     .use(Vue3Toastify, {
-      autoClose: 3000,
+      autoClose: 5000,
       position: toast.POSITION.BOTTOM_RIGHT,
     } as ToastContainerOptions);
 

@@ -12,8 +12,15 @@
       />
     </v-dialog>
     <v-row>
+      <v-col class="d-flex justify-end">
+        <v-btn
+          @click="exitFromRoom"
+        >
+          {{ $t('rooms.exit') }}
+        </v-btn>
+      </v-col>
       <HeaderComponent :versus="versus" />
-      <v-divider class="my-4" />
+      <v-divider class="mb-8"/>
     </v-row>
 
     <v-row class="d-flex justify-center">
@@ -86,10 +93,13 @@ function connectToRoom(id: string, password: string) {
   };
   ws.onerror = (event) => {
     console.error("WebSocket error observed:", event);
+    router.push({ name: "index" })
   };
   ws.onclose = (event) => {
     toast.error(event.reason);
-    if(event.code === 1013) {
+    if( event.code === 1013 ||
+        event.reason === 'cannot find room'
+    ) {
       clearInterval(versusFetchIntervalId.value)
       router.push({ name: "index" })
     }
@@ -130,7 +140,6 @@ if (!isPrivate.value) {
 const versus = computed(() => {
   return roomInfo.value?.users?.filter((user) => user.name != authStore.user?.name)[0]?.name || null;
 });
-
 async function fetchRoom() {
   if (controller) controller.abort();
   controller = new AbortController();
@@ -312,6 +321,12 @@ function resizeBoard(size: number) {
   resizeCountingArrays();
   resetGameBoardCells();
   ws.send(`{"action":"resize", "size": ${rowsAndColumns.value}}`);
+}
+function exitFromRoom() {
+  if (versus.value !== null && authStore?.user.id === roomInfo.value.creator_id) {
+    axios.delete(apiRooms.urls.room(props.roomId))
+  }
+  router.push({ name: "index" })
 }
 </script>
 

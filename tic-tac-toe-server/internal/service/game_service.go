@@ -78,14 +78,16 @@ type WSServer struct {
 var wsRooms map[uint64]*RoomServer
 
 type GameRequest struct {
-	Action   string         `json:"action"`
-	Data     SymbolPosition `json:"data,omitempty"`
-	Password string         `json:"password"`
+	Action     string         `json:"action"`
+	Data       SymbolPosition `json:"data,omitempty"`
+	Password   string         `json:"password"`
+	BorderSize uint64         `json:"size,omitempty"`
 }
 
 type GameReponse struct {
-	Action string      `json:"action"`
-	Data   interface{} `json:"data,omitempty"`
+	Action      string      `json:"action"`
+	Data        interface{} `json:"data,omitempty"`
+	BoarderSize uint64      `json:"size,omitempty"`
 }
 
 func NewWsServer() *WSServer {
@@ -201,9 +203,10 @@ func (ws *WSServer) proccessCommand(
 			ws.broadcastMessageToAll(currentUser.ID, room, raw)
 		}
 	case "resize":
+		ws.Rooms[room.ID].BorderSize = request.BorderSize
 		ws.broadcastMessageToOther(currentUser.ID, room, message)
 	case "new connection to room":
-		if room.IsPrivate != nil {
+		if room.IsPrivate != nil && room.Password != "" {
 			err := bcrypt.CompareHashAndPassword([]byte(room.Password), []byte(request.Password))
 			if err != nil {
 				conn.WriteMessage(
@@ -224,6 +227,17 @@ func (ws *WSServer) proccessCommand(
 			},
 		}
 		raw, err := json.Marshal(response)
+		if err == nil {
+			ws.broadcastMessageToAll(currentUser.ID, room, raw)
+		}
+		if ws.Rooms[room.ID].BorderSize == 0 {
+			ws.Rooms[room.ID].BorderSize = 3
+		}
+		response = &GameReponse{
+			Action:      "resize",
+			BoarderSize: ws.Rooms[room.ID].BorderSize,
+		}
+		raw, err = json.Marshal(response)
 		if err == nil {
 			ws.broadcastMessageToAll(currentUser.ID, room, raw)
 		}

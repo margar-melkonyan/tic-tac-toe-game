@@ -83,12 +83,14 @@ func (service *RoomService) GetById(ctx context.Context, id uint64) (*common.Roo
 }
 
 func (service *RoomService) Create(ctx context.Context, form common.RoomRequest) error {
-	password, err := bcrypt.GenerateFromPassword([]byte(*form.Password), config.ServerConfig.BcryptPower)
-	if err != nil {
-		return err
+	if *form.Password != "" {
+		password, err := bcrypt.GenerateFromPassword([]byte(*form.Password), config.ServerConfig.BcryptPower)
+		if err != nil {
+			return err
+		}
+		hashedPassword := string(password)
+		form.Password = &hashedPassword
 	}
-	hashedPassword := string(password)
-	form.Password = &hashedPassword
 	user, ok := ctx.Value(common.USER).(*common.User)
 	if !ok {
 		return errors.New("userId is not correct")
