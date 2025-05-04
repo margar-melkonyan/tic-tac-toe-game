@@ -7,8 +7,13 @@ export default {
     password: 'Пароль',
     password_confirmation: 'Подтверждение пароля'
   },
-  titles: {
-    rooms: 'Комнаты',
+  rooms: {
+    title: 'Комнаты',
+    my: 'Мои',
+    all: 'Все',
+    create: 'Создать',
+    enter: 'Войти',
+    exit: 'Выйти',
   },
   menu: {
     sign_in: 'Войти',

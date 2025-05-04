@@ -31,7 +31,7 @@
     <v-row class="pa-0 mt-6">
       <v-col cols="6">
         <div class="text-h5">
-          {{ $t('titles.rooms') }}
+          {{ $t('rooms.title') }}
         </div>
       </v-col>
       <v-col
@@ -40,16 +40,32 @@
         cols="6"
       >
         <v-btn @click="openCreateRoomDialog">
-          Создать комнату
+          {{ $t('rooms.create') }}
         </v-btn>
       </v-col>
     </v-row>
-    <v-divider class="my-6" />
+    <v-row>
+      <v-col cols="12">
+        <v-tabs
+          color="red"
+          fixed-tabs
+        >
+          <v-tab fixed>
+            {{ $t('rooms.all') }}
+          </v-tab>
+          <v-tab fixed>
+            {{ $t('rooms.my') }}
+          </v-tab>
+        </v-tabs>
+      </v-col>
+    </v-row>
+    <v-divider class="my-8" />
     <RoomList
+      class="my-8"
       :rooms="rooms"
       @open-login-dialog="openLoginDialog"
     />
-    <v-divider class="my-6" />
+    <v-divider class="my-4" />
     <CreateRoomDialog
       ref="newRoomDialog"
       @close-room-create-dialog="fetchRooms"

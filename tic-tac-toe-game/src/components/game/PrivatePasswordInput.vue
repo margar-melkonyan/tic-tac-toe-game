@@ -21,16 +21,18 @@
     <v-divider />
     <v-card-actions>
       <v-col class="d-flex justify-start py-0">
-        <v-btn @click="closeRoom">
-          {{ $t('close') }}
+        <v-btn @click="exitRoom">
+          {{ $t('rooms.exit') }}
         </v-btn>
       </v-col>
       <v-col
         class="d-flex justify-end py-0"
-        @click="enterRoom"
       >
-        <v-btn>
-          {{ $t('enter') }}
+        <v-btn
+          :loading="loading"
+          @click="enterRoom"
+        >
+          {{ $t('rooms.enter') }}
         </v-btn>
       </v-col>
     </v-card-actions>
@@ -39,7 +41,9 @@
 
 <script setup lang="ts">
 import { ref } from "vue";
-const password = ref<string>("")
+const password = ref<string>("");
+const loading = ref<boolean>(false);
+const router = useRouter();
 const props = defineProps<{
   roomName: String,
   roomId: Number,
@@ -52,9 +56,13 @@ const showPassword = () => {
 const enterRoom = () => {
   props.connectToRoom(props.roomId, password.value)
 }
+const exitRoom = () => {
+  router.push({ name: "index" })
+}
+onMounted(() => {
+  loading.value = true;
+  setTimeout(() => {
+    loading.value = false;
+  }, 2000);
+})
 </script>
-
-
-<style scoped>
-
-</style>

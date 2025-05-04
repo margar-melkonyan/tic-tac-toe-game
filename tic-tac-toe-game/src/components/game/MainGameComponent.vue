@@ -58,6 +58,9 @@ const apiRooms = proxy.$api.rooms;
 const authStore = useAuthStore();
 const router = useRouter();
 
+const props = defineProps<{
+  roomId: string;
+}>();
 const roomInfo = ref(null);
 const rowsAndColumns = ref<number>(3);
 const currentPlayer = ref<number>(0);
@@ -66,14 +69,12 @@ const gameStarted = ref<number>(0);
 const gameEnd = ref<number>(0);
 const isPrivate = ref<boolean>(false);
 const wssIsSuccess = ref<boolean>(false);
+const versusFetchIntervalId = ref<number>(0);
 
 const xCount = new Array(rowsAndColumns.value).fill(0);
 const oCount = new Array(rowsAndColumns.value).fill(0);
 
-const props = defineProps<{
-  roomId: string;
-}>();
-
+let controller:AbortController;
 let ws: WebSocket;
 
 function connectToRoom(id: string, password: string) {
@@ -89,8 +90,8 @@ function connectToRoom(id: string, password: string) {
   ws.onclose = (event) => {
     toast.error(event.reason);
     if(event.code === 1013) {
-      versusFetchInterval.value = 0
-      router.push({ "name": "index" })
+      clearInterval(versusFetchIntervalId.value)
+      router.push({ name: "index" })
     }
     if (event.code === 1008) {
       wssIsSuccess.value = false;
@@ -129,16 +130,10 @@ if (!isPrivate.value) {
 const versus = computed(() => {
   return roomInfo.value?.users?.filter((user) => user.name != authStore.user?.name)[0]?.name || null;
 });
-const versusFetchInterval = ref<number>(0);
-versusFetchInterval.value = window.setInterval(() => {
-  if (!versus.value) {
-    fetchRoom();
-  } else {
-    clearInterval(versusFetchInterval.value);
-  }
-}, 2000);
-authStore.currentUser();
+
 async function fetchRoom() {
+  if (controller) controller.abort();
+  controller = new AbortController();
   try {
     const { data } = await axios.get(apiRooms.urls.roomInfo(props.roomId));
     roomInfo.value = data.data;
@@ -149,6 +144,20 @@ async function fetchRoom() {
     console.error("Failed to fetch room info:", err);
   }
 }
+onMounted(() => {
+  versusFetchIntervalId.value = setInterval(() => {
+    if (!versus.value) {
+      fetchRoom();
+    } else {
+      clearInterval(versusFetchIntervalId.value);
+    }
+  }, 2000);
+  authStore.currentUser();
+})
+onBeforeUnmount(() => {
+  clearInterval(versusFetchIntervalId.value)
+  if (controller) controller.abort();
+})
 function makeStep(i: number, j: number) {
   const cell = document.querySelector(`.grid-index-${i}-${j}>span`);
   if (cell && cell.textContent === '' && wonFlag.value === 0 && versus.value !== null) {
@@ -166,10 +175,8 @@ function playerStep(i: number, j: number, symbol: string) {
   }
   cell.textContent = symbol;
   currentPlayer.value = currentPlayer.value === 0 ? 1 : 0;
-
   resetCounting();
   verticalCheck();
-
   if (wonFlag.value === 0) {
     resetCounting();
     horizontalCheck();
