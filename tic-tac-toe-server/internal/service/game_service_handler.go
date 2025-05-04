@@ -10,16 +10,23 @@ import (
 )
 
 func (ws *WSServer) handleStep(room *common.RoomSessionResponse, request *GameRequest) {
-	opositeSymbol := opositeSymbol(request.Data.Symbol)
-	ws.Rooms[room.ID].Positions = append(ws.Rooms[room.ID].Positions, &request.Data)
-	response := &GameReponse{
-		Action: getPositionsAction,
-		Data: map[string]interface{}{
-			"positions": ws.Rooms[room.ID].Positions,
-		},
-		Symbol: opositeSymbol,
+	rawSymbolPosition, ok := request.Data.(map[string]interface{})
+	if ok {
+		symbolPosition := &SymbolPosition{
+			ID:     rawSymbolPosition["id"].(string),
+			Symbol: rawSymbolPosition["symbol"].(string),
+		}
+		opositeSymbol := opositeSymbol(symbolPosition.Symbol)
+		ws.Rooms[room.ID].Positions = append(ws.Rooms[room.ID].Positions, symbolPosition)
+		response := &GameReponse{
+			Action: getPositionsAction,
+			Data: map[string]interface{}{
+				"positions": ws.Rooms[room.ID].Positions,
+			},
+			Symbol: opositeSymbol,
+		}
+		ws.jsonToAll(room, response)
 	}
-	ws.jsonToAll(room, response)
 }
 
 func (ws *WSServer) handleResetGame(room *common.RoomSessionResponse) {
@@ -150,6 +157,13 @@ func (ws *WSServer) handleNewConnection(
 			}
 		}
 	}
+}
+
+func (ws *WSServer) handleGameEnd(
+	room *common.RoomSessionResponse,
+	request *GameRequest,
+) {
+
 }
 
 func (ws *WSServer) jsonToAll(room *common.RoomSessionResponse, response interface{}) {

@@ -76,11 +76,11 @@ type WSServer struct {
 var wsRooms map[uint64]*RoomServer
 
 type GameRequest struct {
-	Action     string         `json:"action,omitempty"`
-	Data       SymbolPosition `json:"data,omitempty"`
-	Password   string         `json:"password,omitempty"`
-	BorderSize uint64         `json:"size,omitempty"`
-	Symbol     string         `json:"symbol,omitempty"`
+	Action     string      `json:"action,omitempty"`
+	Data       interface{} `json:"data,omitempty"`
+	Password   string      `json:"password,omitempty"`
+	BorderSize uint64      `json:"size,omitempty"`
+	Symbol     string      `json:"symbol,omitempty"`
 }
 
 type GameReponse struct {

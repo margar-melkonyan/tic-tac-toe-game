@@ -187,6 +187,7 @@ if (!isPrivate.value) {
 const versus = computed(() => {
   return roomInfo.value?.users?.filter((user) => user.name != authStore.user?.name)[0]?.name || null;
 });
+
 async function fetchRoom() {
   if (controller) controller.abort();
   controller = new AbortController();
