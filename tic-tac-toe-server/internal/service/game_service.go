@@ -327,22 +327,24 @@ func (ws *WSServer) proccessCommand(
 				secondarySymbol := ""
 				if mainSymbol == "X" {
 					secondarySymbol = "O"
-				} else {
+				}
+				if mainSymbol == "O" {
 					secondarySymbol = "X"
 				}
 
-				resp := &GameReponse{
-					Action: "sync symbol",
-					Symbol: secondarySymbol,
-				}
-				raw, err := json.Marshal(resp)
-				if err == nil {
-					user.Connection.WriteMessage(
-						websocket.TextMessage,
-						raw,
-					)
-				}
-			}
+				if secondarySymbol != "" {
+					resp := &GameReponse{
+						Action: "sync symbol",
+						Symbol: secondarySymbol,
+					}
+					raw, err := json.Marshal(resp)
+					if err == nil {
+						user.Connection.WriteMessage(
+							websocket.TextMessage,
+							raw,
+						)
+					}
+				}}
 		}
 	}
 }

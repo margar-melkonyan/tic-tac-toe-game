@@ -38,7 +38,6 @@
       <HeaderComponent :versus="versus" />
       <v-divider class="mb-8" />
     </v-row>
-    {{ currentPlayer }} {{ mySymbol }}
     <v-row class="d-flex justify-center">
       <GameBoardComponent
         :rows-and-columns="rowsAndColumns"
