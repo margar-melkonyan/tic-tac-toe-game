@@ -5,6 +5,7 @@ class Room extends BaseAPI {
   public urls: object= {
     rooms: (): string => `${this.baseURL}/${this.URI}`,
     room: (id: number): string => `${this.baseURL}/${this.URI}/${id}`,
+    my: (id: number): string => `${this.baseURL}/${this.URI}/my`,
     roomInfo: (id: number): string => `${this.baseURL}/${this.URI}/${id}/info`
   };
 }

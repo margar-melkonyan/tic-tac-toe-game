@@ -63,7 +63,6 @@ func EnterRoom(h *http_handler.RoomHandler) http.HandlerFunc {
 		}
 		defer ws.CloseConnection(room.ID, conn)
 		ws.RefreshConnection(currentUser, room, conn)
-		conn.WriteMessage(websocket.TextMessage, []byte("first player"))
 		for {
 			if ws.GameLoop(currentUser, room, conn) {
 				break

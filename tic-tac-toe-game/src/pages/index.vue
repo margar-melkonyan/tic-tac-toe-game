@@ -47,13 +47,20 @@
     <v-row>
       <v-col cols="12">
         <v-tabs
+          v-if="auth.user !== null"
           color="red"
           fixed-tabs
         >
-          <v-tab fixed>
+          <v-tab
+            fixed
+            @click="changeTab('all')"
+          >
             {{ $t('rooms.all') }}
           </v-tab>
-          <v-tab fixed>
+          <v-tab
+            fixed
+            @click="changeTab('my')"
+          >
             {{ $t('rooms.my') }}
           </v-tab>
         </v-tabs>
@@ -87,7 +94,9 @@ const { proxy } = getCurrentInstance();
 const newRoomDialog = ref<InstanceType<typeof CreateRoomDialog> | null>(null);
 const loginDialog = ref(false)
 const rooms = ref([]);
+const currentTab = ref<string>("all")
 const apiRooms = proxy.$api.rooms;
+let intervalId:number;
 auth.currentUser()
 const openLoginDialog = () => {
   loginDialog.value = true;
@@ -98,10 +107,29 @@ const openCreateRoomDialog = () => {
   }
 };
 const fetchRooms = () => {
-  axios.get(apiRooms.urls.rooms())
+  let url;
+  switch (currentTab.value) {
+    case "all":
+      url = apiRooms.urls.rooms();
+      break;
+    case "my":
+      url = apiRooms.urls.my();
+      break;
+  }
+  axios.get(url)
     .then(({data}) => {
       rooms.value = data.data ?? []
     })
 }
-fetchRooms()
+const changeTab = (tab:string) => {
+  currentTab.value = tab
+  fetchRooms()
+}
+onMounted(() => {
+  intervalId = setInterval(fetchRooms, 5000)
+  fetchRooms()
+})
+onBeforeUnmount(() => {
+  clearInterval(intervalId)
+})
 </script>

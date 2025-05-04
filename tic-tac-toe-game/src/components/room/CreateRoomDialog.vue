@@ -91,6 +91,7 @@ function closeRoomCreationDialog() {
   emit('closeRoomCreateDialog')
   isPrivateRoom.value = false
   dialogCreateRoom.value = false
+  form.value.reset()
 }
 function changeRoomPrivacy() {
   isPrivateRoom.value = !isPrivateRoom.value
@@ -99,6 +100,7 @@ function newRoom() {
   form.value.post(proxy.$api.rooms.urls.rooms())
     .then(() => {
       closeRoomCreationDialog()
+      form.value.reset()
     })
     .catch(() => {})
 }

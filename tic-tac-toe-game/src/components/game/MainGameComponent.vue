@@ -1,6 +1,22 @@
 <template>
   <v-col>
     <v-dialog
+      v-model="chooseSymbolDialog"
+      width="500"
+      persistent
+    >
+      <ChooseSplashScreen
+        :send-choose-symbol="sendChooseSymbol"
+      />
+    </v-dialog>
+    <v-dialog
+      v-model="waitSymbolChoosing"
+      width="500"
+      persistent
+    >
+      <WaitSplashScreen />
+    </v-dialog>
+    <v-dialog
       v-model="isPrivate"
       width="500"
       persistent
@@ -20,7 +36,7 @@
         </v-btn>
       </v-col>
       <HeaderComponent :versus="versus" />
-      <v-divider class="mb-8"/>
+      <v-divider class="mb-8" />
     </v-row>
 
     <v-row class="d-flex justify-center">
@@ -74,9 +90,11 @@ const currentPlayer = ref<number>(0);
 const wonFlag = ref<number>(0);
 const gameStarted = ref<number>(0);
 const gameEnd = ref<number>(0);
+const versusFetchIntervalId = ref<number>(0);
 const isPrivate = ref<boolean>(false);
 const wssIsSuccess = ref<boolean>(false);
-const versusFetchIntervalId = ref<number>(0);
+const chooseSymbolDialog = ref<boolean>(false);
+const waitSymbolChoosing = ref<boolean>(false);
 
 const xCount = new Array(rowsAndColumns.value).fill(0);
 const oCount = new Array(rowsAndColumns.value).fill(0);
@@ -84,6 +102,9 @@ const oCount = new Array(rowsAndColumns.value).fill(0);
 let controller:AbortController;
 let ws: WebSocket;
 
+const sendChooseSymbol = (symbol:string) => {
+  ws.send(`{"action": "select symbol", "symbol": "${symbol}"}`);
+}
 function connectToRoom(id: string, password: string) {
   ws = new WebSocket(`${apiRooms.urls.room(id).replace("http", "ws")}?token=${localStorage.getItem("token")}`);
   ws.onopen = () => {
@@ -131,6 +152,12 @@ function connectToRoom(id: string, password: string) {
         resizeCountingArrays();
         resetGameBoardCells();
         break;
+      case "choose symbol":
+        if(authStore.user.id === data.user_id) {
+          chooseSymbolDialog.value = true
+        } else {
+          waitSymbolChoosing.value = true
+        }
     }
   };
 }

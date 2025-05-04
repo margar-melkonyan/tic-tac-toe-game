@@ -68,6 +68,7 @@ type RoomServer struct {
 	Users      []*ConnectedUser  `json:"users"`
 	Positions  []*SymbolPosition `json:"symbol_positions"`
 	BorderSize uint64            `json:"border_size"`
+	GameStatus string            `json:"game_status"`
 }
 
 type WSServer struct {
@@ -82,6 +83,7 @@ type GameRequest struct {
 	Data       SymbolPosition `json:"data,omitempty"`
 	Password   string         `json:"password"`
 	BorderSize uint64         `json:"size,omitempty"`
+	Symbol     string         `json:"symbol"`
 }
 
 type GameReponse struct {
@@ -191,7 +193,7 @@ func (ws *WSServer) proccessCommand(
 		}
 		raw, err := json.Marshal(response)
 		if err == nil {
-			ws.broadcastMessageToAll(currentUser.ID, room, raw)
+			ws.broadcastMessageToAll(room, raw)
 		}
 	case "reset game":
 		ws.Rooms[room.ID].Positions = make([]*SymbolPosition, 0)
@@ -200,13 +202,30 @@ func (ws *WSServer) proccessCommand(
 		}
 		raw, err := json.Marshal(response)
 		if err == nil {
-			ws.broadcastMessageToAll(currentUser.ID, room, raw)
+			ws.broadcastMessageToAll(room, raw)
 		}
 	case "resize":
 		if currentUser.ID == room.CreatorID {
 			ws.Rooms[room.ID].BorderSize = request.BorderSize
 			ws.broadcastMessageToOther(currentUser.ID, room, message)
 		}
+	case "select symbol":
+		ws.Mu.Lock()
+		defer ws.Mu.Unlock()
+		for id, user := range ws.Rooms[room.ID].Users {
+			if user.ID == currentUser.ID {
+				ws.Rooms[room.ID].Users[id].Symbol = request.Symbol
+			} else {
+				symbol := ""
+				if request.Symbol == "X" {
+					symbol = "O"
+				} else {
+					symbol = "X"
+				}
+				ws.Rooms[room.ID].Users[id].Symbol = symbol
+			}
+		}
+		ws.broadcastMessageToAll(room, message)
 	case "new connection to room":
 		if room.IsPrivate != nil && room.Password != "" {
 			err := bcrypt.CompareHashAndPassword([]byte(room.Password), []byte(request.Password))
@@ -219,7 +238,7 @@ func (ws *WSServer) proccessCommand(
 			}
 		}
 		ws.broadcastMessageToOther(currentUser.ID, room, []byte(fmt.Sprintf(
-			`{"action":"new connection to room", "user_id": "%v"}`,
+			`{"action":"new connection to room", "user_id":"%v"}`,
 			currentUser.ID,
 		)))
 		response := &GameReponse{
@@ -230,7 +249,7 @@ func (ws *WSServer) proccessCommand(
 		}
 		raw, err := json.Marshal(response)
 		if err == nil {
-			ws.broadcastMessageToAll(currentUser.ID, room, raw)
+			ws.broadcastMessageToAll(room, raw)
 		}
 		if ws.Rooms[room.ID].BorderSize == 0 {
 			ws.Rooms[room.ID].BorderSize = 3
@@ -241,7 +260,38 @@ func (ws *WSServer) proccessCommand(
 		}
 		raw, err = json.Marshal(response)
 		if err == nil {
-			ws.broadcastMessageToAll(currentUser.ID, room, raw)
+			ws.broadcastMessageToAll(room, raw)
+		}
+		ws.Rooms[room.ID].GameStatus = "choose symbol"
+		ws.broadcastMessageToAll(room, []byte(fmt.Sprintf(
+			`{"action":"choose symbol", "user_id":"%v"}`,
+			ws.Rooms[room.ID].Users[0].ID,
+		)))
+
+		if len(ws.Rooms[room.ID].Users) == 2 {
+			var prev *ConnectedUser
+			for _, user := range ws.Rooms[room.ID].Users {
+				if user.Symbol != "" {
+					symbol := ""
+					if user.Symbol == "X" {
+						symbol = "O"
+					} else {
+						symbol = "X"
+					}
+					prev.Symbol = symbol
+					break
+				}
+				prev = user
+			}
+		}
+		isAllUserSelectedSymbol := 0
+		for _, user := range ws.Rooms[room.ID].Users {
+			if user.Symbol != "" {
+				isAllUserSelectedSymbol += 1
+			}
+		}
+		if len(ws.Rooms[room.ID].Users) == 2 && isAllUserSelectedSymbol == 2 {
+			ws.Rooms[room.ID].GameStatus = "in process"
 		}
 	}
 }
@@ -328,7 +378,6 @@ func (ws *WSServer) broadcastMessageToOther(
 }
 
 func (ws *WSServer) broadcastMessageToAll(
-	currentUserID uuid.UUID,
 	room *common.RoomSessionResponse,
 	raw []byte,
 ) {

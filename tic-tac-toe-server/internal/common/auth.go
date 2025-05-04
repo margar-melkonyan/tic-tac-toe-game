@@ -36,5 +36,6 @@ type UserResponse struct {
 	Name      string     `json:"name"`
 	Email     string     `json:"email,omitempty"`
 	WonScore  *uint      `json:"current_won_score,omitempty"`
+	Symbol    string     `json:"symbol,omitempty"`
 	CreatedAt *time.Time `json:"created_at,omitempty"`
 }

@@ -20,7 +20,6 @@
             variant="outlined"
             :color="props.room.player_in === props.room.capacity ? 'white' : '#ff7fea'"
             density="comfortable"
-            :disabled="props.room.player_in === props.room.capacity"
             @click="openRoom"
           >
             {{ $t('enter') }}

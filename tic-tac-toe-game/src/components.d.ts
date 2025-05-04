@@ -8,6 +8,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AppFooter: typeof import('./components/AppFooter.vue')['default']
+    ChooseSplashScreen: typeof import('./components/game/splashes/ChooseSplashScreen.vue')['default']
     CreateRoomDialog: typeof import('./components/room/CreateRoomDialog.vue')['default']
     FormDialog: typeof import('./components/auth/FormDialog.vue')['default']
     GameBoardComponent: typeof import('./components/game/GameBoardComponent.vue')['default']
@@ -24,5 +25,6 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     SignInForm: typeof import('./components/auth/SignInForm.vue')['default']
     SignUpForm: typeof import('./components/auth/SignUpForm.vue')['default']
+    WaitSplashScreen: typeof import('./components/game/splashes/WaitSplashScreen.vue')['default']
   }
 }

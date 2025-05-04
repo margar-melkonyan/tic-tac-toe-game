@@ -55,6 +55,15 @@ func (service *RoomService) GetAll(ctx context.Context) []*common.RoomResponse {
 	return roomsResponse
 }
 
+func isUserInRoom(currentUser *common.User, users []*ConnectedUser) bool {
+	for _, user := range users {
+		if user.ID == currentUser.ID {
+			return true
+		}
+	}
+	return false
+}
+
 func (service *RoomService) GetAllMy(ctx context.Context) []*common.RoomResponse {
 	currentUser, ok := ctx.Value(common.USER).(*common.User)
 	if !ok {
@@ -69,7 +78,7 @@ func (service *RoomService) GetAllMy(ctx context.Context) []*common.RoomResponse
 		if roomInfo != nil {
 			playerIn = len(roomInfo.Users)
 		}
-		if currentUser.ID == room.CreatorID {
+		if currentUser.ID == room.CreatorID || (roomInfo != nil && isUserInRoom(currentUser, roomInfo.Users)) {
 			roomsResponse = append(roomsResponse, &common.RoomResponse{
 				ID:        room.ID,
 				Name:      room.Name,
@@ -92,15 +101,19 @@ func (service *RoomService) GetAllMy(ctx context.Context) []*common.RoomResponse
 func (service *RoomService) GetById(ctx context.Context, id uint64) (*common.RoomSessionResponse, error) {
 	room, err := service.repo.FindById(ctx, id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to find room with ID %d: %w", id, err)
+	}
+	if room == nil {
+		return nil, fmt.Errorf("room with ID %d not found", id)
 	}
 	users := make([]*common.UserResponse, 0)
 	roomSession := GetCurrentRoomInfo(room.ID)
 	if roomSession != nil {
 		for _, user := range roomSession.Users {
 			users = append(users, &common.UserResponse{
-				ID:   user.ID,
-				Name: user.Name,
+				ID:     user.ID,
+				Name:   user.Name,
+				Symbol: user.Symbol,
 			})
 		}
 	}
@@ -113,7 +126,7 @@ func (service *RoomService) GetById(ctx context.Context, id uint64) (*common.Roo
 		Capacity:  room.Capacity,
 		Users:     users,
 	}
-	return resp, err
+	return resp, nil
 }
 
 func (service *RoomService) Create(ctx context.Context, form common.RoomRequest) error {
