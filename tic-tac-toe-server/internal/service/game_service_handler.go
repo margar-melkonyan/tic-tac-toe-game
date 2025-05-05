@@ -13,16 +13,17 @@ import (
 func (ws *WSServer) handleStep(room *common.RoomSessionResponse, request *GameRequest) {
 	rawSymbolPosition, ok := request.Data.(map[string]interface{})
 	if ok {
+		currentRoom := ws.Rooms[room.ID]
 		symbolPosition := &SymbolPosition{
 			ID:     rawSymbolPosition["id"].(string),
 			Symbol: rawSymbolPosition["symbol"].(string),
 		}
 		opositeSymbol := opositeSymbol(symbolPosition.Symbol)
-		ws.Rooms[room.ID].Positions = append(ws.Rooms[room.ID].Positions, symbolPosition)
+		currentRoom.Positions = append(currentRoom.Positions, symbolPosition)
 		response := &GameReponse{
 			Action: getPositionsAction,
 			Data: map[string]interface{}{
-				"positions": ws.Rooms[room.ID].Positions,
+				"positions": currentRoom.Positions,
 			},
 			Symbol: opositeSymbol,
 		}
@@ -33,7 +34,7 @@ func (ws *WSServer) handleStep(room *common.RoomSessionResponse, request *GameRe
 func (ws *WSServer) handleResetGame(room *common.RoomSessionResponse) {
 	ws.Rooms[room.ID].Positions = make([]*SymbolPosition, 0)
 	response := &GameReponse{
-		Action: "reset game",
+		Action: resetGameAction,
 	}
 	ws.jsonToAll(room, response)
 }
@@ -55,14 +56,15 @@ func (ws *WSServer) handleSelectSymbol(
 	room *common.RoomSessionResponse,
 	request *GameRequest,
 ) {
-	for id, user := range ws.Rooms[room.ID].Users {
+	currentRoom := ws.Rooms[room.ID]
+	for id, user := range currentRoom.Users {
 		if user.Symbol != "" {
 			continue
 		}
 		if user.ID == currentUserId {
-			ws.Rooms[room.ID].Users[id].Symbol = request.Symbol
+			currentRoom.Users[id].Symbol = request.Symbol
 		} else {
-			ws.Rooms[room.ID].Users[id].Symbol = opositeSymbol(request.Symbol)
+			currentRoom.Users[id].Symbol = opositeSymbol(request.Symbol)
 		}
 	}
 	response := &GameReponse{
@@ -78,6 +80,7 @@ func (ws *WSServer) handleNewConnection(
 	request *GameRequest,
 	conn *websocket.Conn,
 ) {
+	currentRoom := ws.Rooms[room.ID]
 	if room.IsPrivate != nil && room.Password != "" {
 		err := bcrypt.CompareHashAndPassword([]byte(room.Password), []byte(request.Password))
 		if err != nil {
@@ -89,35 +92,39 @@ func (ws *WSServer) handleNewConnection(
 		}
 	}
 	response := &GameReponse{
-		Action: "new connection to room",
-		UserID: currentUserId,
+		Action: newConnectionToRoomAction,
+		UserID: &currentUserId,
 	}
 	ws.jsonToAll(room, response)
-	if ws.Rooms[room.ID].BorderSize == 0 {
-		ws.Rooms[room.ID].BorderSize = 3
+	if currentRoom.BorderSize == 0 {
+		currentRoom.BorderSize = 3
 	}
 	response = &GameReponse{
 		Action:      resizeAction,
-		BoarderSize: ws.Rooms[room.ID].BorderSize,
+		BoarderSize: currentRoom.BorderSize,
 	}
 	ws.jsonToAll(room, response)
+	currentPlayerStep := currentRoom.Users[0].Symbol
+	if len(currentRoom.Positions) != 0 {
+		currentPlayerStep = opositeSymbol(currentRoom.Positions[len(currentRoom.Positions)-1].Symbol)
+	}
 	response = &GameReponse{
 		Action: getPositionsAction,
 		Data: map[string]interface{}{
-			"positions": ws.Rooms[room.ID].Positions,
+			"positions": currentRoom.Positions,
 		},
-		Symbol: ws.Rooms[room.ID].Users[0].Symbol,
+		Symbol: currentPlayerStep,
 	}
 	ws.jsonToAll(room, response)
-	ws.Rooms[room.ID].GameStatus = chooseSymbolStatus
+	currentRoom.GameStatus = chooseSymbolStatus
 	response = &GameReponse{
 		Action: chooseSymbolAction,
-		UserID: ws.Rooms[room.ID].Users[0].ID,
+		UserID: &currentRoom.Users[0].ID,
 	}
 	ws.jsonToAll(room, response)
-	if len(ws.Rooms[room.ID].Users) == 2 {
+	if len(currentRoom.Users) == 2 {
 		var prev *ConnectedUser
-		for _, user := range ws.Rooms[room.ID].Users {
+		for _, user := range currentRoom.Users {
 			if user.Symbol != "" {
 				if prev != nil {
 					prev.Symbol = opositeSymbol(user.Symbol)
@@ -128,16 +135,16 @@ func (ws *WSServer) handleNewConnection(
 		}
 	}
 	isAllUserSelectedSymbol := 0
-	for _, user := range ws.Rooms[room.ID].Users {
+	for _, user := range currentRoom.Users {
 		if user.Symbol != "" {
 			isAllUserSelectedSymbol += 1
 		}
 	}
-	if len(ws.Rooms[room.ID].Users) == 2 && isAllUserSelectedSymbol == 2 {
-		ws.Rooms[room.ID].GameStatus = inProcessStatus
+	if len(currentRoom.Users) == 2 && isAllUserSelectedSymbol == 2 {
+		currentRoom.GameStatus = inProcessStatus
 	}
 	mainSymbol := ""
-	for _, user := range ws.Rooms[room.ID].Users {
+	for _, user := range currentRoom.Users {
 		if user.Symbol != "" {
 			mainSymbol = user.Symbol
 		}
@@ -161,6 +168,7 @@ func (ws *WSServer) handleNewConnection(
 }
 
 func (ws *WSServer) handleGameEnd(
+	currentUserID uuid.UUID,
 	room *common.RoomSessionResponse,
 	request *GameRequest,
 ) {
@@ -173,6 +181,11 @@ func (ws *WSServer) handleGameEnd(
 		}
 		ws.ScoreService.scoreRepo.Create(context.Background(), score)
 	}
+	ws.jsonToOther(
+		currentUserID,
+		room, &GameReponse{
+			Action: restartGameAction,
+		})
 }
 
 func (ws *WSServer) handleCloseRoom(

@@ -89,7 +89,7 @@ type GameReponse struct {
 	Data        interface{} `json:"data,omitempty"`
 	BoarderSize uint64      `json:"size,omitempty"`
 	Symbol      string      `json:"symbol,omitempty"`
-	UserID      uuid.UUID   `json:"user_id,omitempty"`
+	UserID      *uuid.UUID  `json:"user_id,omitempty"`
 }
 
 func NewWsServer(scoreService *ScoreService) *WSServer {
@@ -219,6 +219,7 @@ func (ws *WSServer) proccessCommand(
 		)
 	case gameEndAction:
 		ws.handleGameEnd(
+			currentUser.ID,
 			room,
 			&request,
 		)
