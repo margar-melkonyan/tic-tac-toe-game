@@ -1,32 +1,73 @@
 <template>
-  <v-row
-    v-if="props.gameStarted === 0 && authStore.user?.id === roomInfo?.creator_id"
-    class="d-flex justify-center"
+  <v-container
+    max-width="800px"
+    class="pa-0"
   >
-    <v-col
-      cols="2"
-      class="d-flex justify-space-between"
-    >
-      <v-btn
-        color="red"
-        block
-        :disabled="props.rowsAndColumns === 3"
-        @click="props.resizeBoard(-1)"
+    <v-divider class="my-8" />
+    <v-row class="d-flex justify-center" style="font-family: 'Roboto', sans-serif">
+      Изменить размеры поля ({{ rowsAndColumns }} x {{ rowsAndColumns }})
+    </v-row>
+    <v-divider class="mb-4 mt-8" />
+    <v-row class="d-flex justify-center">
+      <v-col
+        cols="4"
       >
-        <v-icon>mdi-minus</v-icon>
-      </v-btn>
-    </v-col>
-    <v-col cols="2">
-      <v-btn
-        color="green"
-        block
-        :disabled="props.rowsAndColumns === 10"
-        @click="props.resizeBoard(1)"
+        <v-btn
+          color="red"
+          block
+          :disabled="props.rowsAndColumns === 3"
+          @click="props.resizeBoard(-1)"
+        >
+          <v-icon>mdi-minus</v-icon>
+        </v-btn>
+      </v-col>
+      <v-col
+        cols="4"
       >
-        <v-icon>mdi-plus</v-icon>
-      </v-btn>
-    </v-col>
-  </v-row>
+        <v-btn
+          color="green"
+          block
+          :disabled="props.rowsAndColumns === 6"
+          @click="props.resizeBoard(1)"
+        >
+          <v-icon>mdi-plus</v-icon>
+        </v-btn>
+      </v-col>
+    </v-row>
+  </v-container>
+<!--  <v-col-->
+<!--    v-if="props.gameStarted === 0 && authStore.user?.id === roomInfo?.creator_id"-->
+<!--    class="mt-8"-->
+<!--  >-->
+<!--    <v-row class="d-flex justify-center" style="font-family: 'Roboto', sans-serif">-->
+<!--      Изменить размеры поля ({{ rowsAndColumns }} x {{ rowsAndColumns }})-->
+<!--    </v-row>-->
+<!--    <v-col class="d-flex justify-center">-->
+<!--      <v-col-->
+<!--        cols="1"-->
+<!--        class="d-flex justify-space-between"-->
+<!--      >-->
+<!--        <v-btn-->
+<!--          color="red"-->
+<!--          icon-->
+<!--          :disabled="props.rowsAndColumns === 3"-->
+<!--          @click="props.resizeBoard(-1)"-->
+<!--        >-->
+<!--          <v-icon>mdi-minus</v-icon>-->
+<!--        </v-btn>-->
+<!--      </v-col>-->
+<!--      <v-col cols="1">-->
+<!--        <v-btn-->
+<!--          color="green"-->
+<!--          icon-->
+<!--          :disabled="props.rowsAndColumns === 6"-->
+<!--          @click="props.resizeBoard(1)"-->
+<!--        >-->
+<!--          <v-icon>mdi-plus</v-icon>-->
+<!--        </v-btn>-->
+<!--      </v-col>-->
+<!--    </v-col>-->
+<!--  </v-col>-->
 </template>
 
 <script setup lang="ts">
@@ -36,7 +77,7 @@ const authStore = useAuthStore();
 const props = defineProps({
   gameStarted: Number,
   rowsAndColumns: Number,
-  resizeBoard: Function,
   roomInfo: Object,
+  resizeBoard: Function,
 });
 </script>

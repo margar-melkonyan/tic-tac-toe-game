@@ -9,28 +9,11 @@
       style="max-width: 500px"
     >
       <v-alert
-        v-if="props.wonFlag === -1"
-        type="success"
+        :type="currentStatus?.type"
         colored-border
         elevation="2"
       >
-        🟢 Победил первый игрок (О)
-      </v-alert>
-      <v-alert
-        v-if="props.wonFlag === 1"
-        type="info"
-        colored-border
-        elevation="2"
-      >
-        🔵 Победил второй игрок (X)
-      </v-alert>
-      <v-alert
-        v-if="props.wonFlag === -2"
-        type="warning"
-        colored-border
-        elevation="2"
-      >
-        ⚪ Ничья
+        {{ currentStatus?.title }}
       </v-alert>
       <v-btn
         class="mt-4"
@@ -46,6 +29,37 @@
 <script setup lang="ts">
 const props = defineProps({
   wonFlag: Number,
+  mySymbol: String,
   doResetGame: Function,
 });
+const currentStatus = ref({})
+const gameStatus = () => {
+  if (
+    (props.wonFlag === 1 && props.mySymbol === 'X') ||
+    (props.wonFlag === -1 && props.mySymbol === 'O')
+  ) {
+    return {
+      type: "success",
+      title: "Выигрыш!"
+    }
+  }
+
+  if (
+    props.wonFlag === -2
+  ) {
+    return {
+      type: "warning",
+      title: "Ничья!"
+    }
+  }
+
+  return {
+    type: "error",
+    title: "Проигрыш!"
+  }
+}
+
+onUpdated(() => {
+  currentStatus.value = gameStatus()
+})
 </script>

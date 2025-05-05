@@ -186,7 +186,7 @@ function resetGame() {
           mdi-minus
         </v-icon>
       </v-btn>
-      <v-btn color="green" :disabled="rowsAndColumns === 10" @click="++rowsAndColumns">
+      <v-btn color="green" :disabled="rowsAndColumns === 6" @click="++rowsAndColumns">
         <v-icon>
           mdi-plus
         </v-icon>

@@ -27,19 +27,21 @@
         :connect-to-room="connectToRoom"
       />
     </v-dialog>
-    <v-row>
-      <v-col class="d-flex justify-end">
-        <v-btn
-          @click="exitFromRoom"
-        >
-          {{ $t('rooms.exit') }}
-        </v-btn>
-      </v-col>
-      <HeaderComponent :versus="versus" />
-      <v-divider class="mb-8" />
-    </v-row>
     <v-row class="d-flex justify-center">
+      <HeaderComponent
+        :versus="versus"
+        :room-info="roomInfo"
+        :exit-from-room="exitFromRoom"
+      />
+    </v-row>
+    <v-row class="d-flex justify-center my-4">
+      <span>
+        Ходит игрок: {{ currentPlayer }}
+      </span>
+    </v-row>
+    <v-row class="d-flex justify-center my-8">
       <GameBoardComponent
+        :versus="versus"
         :rows-and-columns="rowsAndColumns"
         :make-step="makeStep"
         :get-cell-style="getCellStyle"
@@ -56,6 +58,7 @@
     />
 
     <GameResultComponent
+      :my-symbol="mySymbol"
       :won-flag="wonFlag"
       :do-reset-game="doResetGame"
     />
@@ -157,7 +160,6 @@ function connectToRoom(id: string, password: string) {
       case "resize":
         rowsAndColumns.value = data.size;
         resizeCountingArrays();
-        resetGameBoardCells();
         break;
       case "choose symbol":
         if(authStore?.user?.id === data.user_id) {
@@ -168,12 +170,11 @@ function connectToRoom(id: string, password: string) {
         break
       case "selected symbol":
         mySymbol.value = data.symbol
-        if (data.symbol === 'X') {
-          currentPlayer.value = 'O'
-        } else {
-          currentPlayer.value = 'X'
-        }
+        currentPlayer.value = 'X'
         waitSymbolChoosing.value = false
+        break
+      case "restart game":
+        currentPlayer.value = 'X'
         break
       case "sync symbol":
         mySymbol.value = data.symbol
@@ -373,7 +374,9 @@ function getCellStyle() {
   return {
     flex: '1',
     aspectRatio: '1',
-    border: '1px solid black',
+    border: '0.25rem solid #ff7fea',
+    'border-radius': '0.25rem',
+    margin: '0.25rem',
     backgroundColor: 'white',
     display: 'flex',
     alignItems: 'center',

@@ -7,7 +7,7 @@
         <v-col cols="6">
           <v-card
             color="red"
-            :style="selectedSymbol === 'X' ? 'border: white solid 0.3rem' : ''"
+            :style="selectedSymbol === 'X' ? 'border: #ff7fea solid 0.3rem' : ''"
             @click="choseSymbol('X')"
           >
             <v-card-text
@@ -21,8 +21,8 @@
         </v-col>
         <v-col cols="6">
           <v-card
-            color="blue"
-            :style="selectedSymbol === 'O' ? 'border: white solid 0.3rem' : ''"
+            color="green"
+            :style="selectedSymbol === 'O' ? 'border: #ff7fea solid 0.3rem' : ''"
             @click="choseSymbol('O')"
           >
             <v-card-text

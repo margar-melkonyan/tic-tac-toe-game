@@ -1,5 +1,5 @@
 <template>
-  <div style="display: flex; flex-direction: column; width: 100%; max-width: 600px;">
+  <div class="main-board">
     <div
       v-for="i in props.rowsAndColumns"
       :key="i"
@@ -31,3 +31,12 @@ const props = defineProps({
   getFontStyle: Function,
 });
 </script>
+
+<style>
+.main-board {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 600px;
+}
+</style>
