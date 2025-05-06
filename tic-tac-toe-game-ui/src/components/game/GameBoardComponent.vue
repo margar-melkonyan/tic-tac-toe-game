@@ -13,7 +13,7 @@
         @click="props.makeStep(i, j)"
       >
         <span
-          class="no-select"
+          class="no-select coming-soon-regular"
           :style="props.getFontStyle()"
         />
       </div>
@@ -39,4 +39,10 @@ const props = defineProps({
   width: 100%;
   max-width: 600px;
 }
+.coming-soon-regular {
+  font-family: "Coming Soon", cursive;
+  font-weight: 400;
+  font-style: normal;
+}
+
 </style>

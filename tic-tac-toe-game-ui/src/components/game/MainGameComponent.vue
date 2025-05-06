@@ -50,7 +50,7 @@
     </v-row>
 
     <GameControlsComponent
-      v-if="gameStarted === 0"
+      v-if="gameStarted === 0 && authStore.user?.id === roomInfo?.creator_id"
       :game-started="gameStarted"
       :rows-and-columns="rowsAndColumns"
       :resize-board="resizeBoard"

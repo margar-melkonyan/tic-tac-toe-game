@@ -29,6 +29,11 @@ export default {
     open: 'Открыть статистику',
     unavailable: 'Статистика отсутсвует!',
   },
+  game_status: {
+    success: "Выигрыш!",
+    lost: "Проигрыш!",
+    draw: "Ничья!",
+  },
   navbar: {
     auth: {
       won: '(Выиграно: {0})'
