@@ -1,9 +1,7 @@
 <template>
   <v-container
     max-width="800px"
-    class="pa-0"
   >
-    <!-- Используйте v-container для ограничения ширины -->
     <v-row class="d-flex justify-center">
       <v-col
         cols="12"
@@ -13,7 +11,7 @@
           v-if="roomInfo"
           class="d-flex align-center"
         >
-          Комната: {{ roomInfo?.name.toUpperCase() }}
+          {{ $t('room.title', [roomInfo?.name.toUpperCase()]) }}
         </div>
         <div v-else>
           Идет загрузка комнаты...
@@ -43,9 +41,19 @@
           v-else
           cols="4"
         >
-          Ждем противника!
+          <span>
+            {{ $t('room.wait_opponent') }}
+          </span>
+          <span class="dots">
+            <span class="dot">.</span>
+            <span class="dot">.</span>
+            <span class="dot">.</span>
+          </span>
         </v-col>
-        <v-col class="d-flex justify-center" cols="4">
+        <v-col
+          class="d-flex justify-center"
+          cols="4"
+        >
           <img
             src="../../assets/vs.png"
             style="height: 45px;"
@@ -74,3 +82,43 @@ const props = defineProps({
   exitFromRoom: Function,
 });
 </script>
+
+<style>
+.dots {
+  display: inline-block;
+  margin-left: 0.3em;
+}
+.dot {
+  display: inline-block;
+  animation: blink 1.5s infinite;
+  opacity: 0;
+  font-weight: 900;
+}
+.dot:nth-child(1) {
+  animation-delay: 0s;
+}
+.dot:nth-child(2) {
+  animation-delay: 0.3s;
+}
+.dot:nth-child(3) {
+  animation-delay: 0.6s;
+}
+@keyframes blink {
+  0%, 20% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+/* Responsive adjustment for small screens */
+@media (max-width: 600px) {
+  .wait-opponent-text {
+    font-size: 1.2rem;
+  }
+}
+
+</style>

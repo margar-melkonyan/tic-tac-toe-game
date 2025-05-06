@@ -2,23 +2,28 @@
   <v-footer
     height="40"
     app
+    class="d-flex justify-center"
   >
-    <div
-      class="text-caption text-disabled"
-      style="position: absolute; right: 16px;"
+    <v-container
+      max-width="800"
+      class="d-flex align-center"
     >
-      &copy;
-      <span class="d-none d-sm-inline-block">
-        TicTacToe Game By
-        <a
-          target="_blank"
-          href="https://github.com/margar-melkonyan"
-          class="social-link"
-        >
-          Melkonyan M.
-        </a>
-      </span>
-    </div>
+      <v-row
+        class="text-caption text-disabled justify-end"
+      >
+        &copy;
+        <span>
+          TicTacToe Game By
+          <a
+            target="_blank"
+            href="https://github.com/margar-melkonyan"
+            class="social-link"
+          >
+            Melkonyan M.
+          </a>
+        </span>
+      </v-row>
+    </v-container>
   </v-footer>
 </template>
 

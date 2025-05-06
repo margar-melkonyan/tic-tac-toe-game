@@ -5,7 +5,7 @@
     <v-card-title
       class="d-flex justify-center"
     >
-      Ожидайте выбора игроком своего символа
+      {{ $t('splashes.room.wait_opponent') }}
     </v-card-title>
     <v-card-text
       class="d-flex justify-center"

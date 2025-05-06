@@ -1,25 +1,29 @@
 <template>
   <v-card class="pa-4">
     <v-card-title class="d-flex justify-center">
-      Статистика за последние  50 игр
+      {{ $t('statistics.title') }}
     </v-card-title>
     <v-divider class="my-4" />
     <div style="max-height: 350px; overflow-y: auto;">
-      <v-card-text
-        v-if="scores.length > 0"
-        v-for="(score, key) in scores"
-        class="py-2"
-        :key="`score-${score.id}-${key}`"
-      >
-        <div
-          class="py-4 d-flex justify-center"
-          :style="`background-color: ${labelWithColor(score).color}; border-radius: 0.5rem;`"
+      <template v-if="scores.length > 0">
+        <v-card-text
+          v-for="(score, key) in scores"
+          :key="`score-${score.id}-${key}`"
+          class="py-2"
         >
-          {{ labelWithColor(score).title }} {{ score.nickname }} {{ moment(score.created_at).utc().format('DD.MM.YYYY HH:mm:ss') }}
-        </div>
-      </v-card-text>
-      <v-card-text v-else class="d-flex justify-center">
-        Статистика отсутсвует!
+          <div
+            class="py-4 d-flex justify-center"
+            :style="`background-color: ${labelWithColor(score).color}; border-radius: 0.5rem;`"
+          >
+            {{ labelWithColor(score).title }} {{ score.nickname }} {{ moment(score.created_at).utc().format('DD.MM.YYYY HH:mm:ss') }}
+          </div>
+        </v-card-text>
+      </template>
+      <v-card-text
+        v-else
+        class="d-flex justify-center"
+      >
+        {{ $t('statistics.unavailable') }}
       </v-card-text>
     </div>
     <v-divider class="my-4" />
