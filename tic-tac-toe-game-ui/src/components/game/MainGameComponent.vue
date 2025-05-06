@@ -111,12 +111,18 @@ const sendChooseSymbol = (symbol:string) => {
   currentPlayer.value = symbol
   chooseSymbolDialog.value = false
   waitSymbolChoosing.value = false
-  ws.send(`{"action": "select symbol", "symbol": "${symbol}"}`);
+  ws.send(JSON.stringify({
+    action: "select symbol",
+    symbol: symbol,
+  }))
 }
 function connectToRoom(id: string, password: string) {
   ws = new WebSocket(`${apiRooms.urls.room(id).replace("http", "ws")}?token=${localStorage.getItem("token")}`);
   ws.onopen = () => {
-    ws.send(`{"action": "new connection to room", "password": "${password}"}`);
+    ws.send(JSON.stringify({
+      action: "new connection to room",
+      password: password,
+    }))
     wssIsSuccess.value = true;
     isPrivate.value = false;
   };
@@ -217,7 +223,6 @@ onMounted(() => {
       clearInterval(versusFetchIntervalId.value);
     }
   }, 2000);
-  authStore.currentUser();
 })
 onBeforeUnmount(() => {
   clearInterval(versusFetchIntervalId.value)
@@ -229,7 +234,13 @@ function makeStep(i: number, j: number) {
     cell && cell.textContent === '' && wonFlag.value === 0 && versus.value !== null &&
     currentPlayer.value == mySymbol.value
   ) {
-    ws.send(`{"data":{"id": "${i}-${j}", "symbol": "${mySymbol.value}"}, "action": "step"}`);
+    ws.send(JSON.stringify({
+      data: {
+        id: `${i}-${j}`,
+        symbol: mySymbol.value,
+      },
+      action: "step",
+    }))
   }
 }
 function playerStep(i: number, j: number, symbol: string) {
@@ -339,7 +350,9 @@ function checkDraw() {
   }
 }
 function doResetGame() {
-  ws.send(`{"action": "reset game"}`);
+  ws.send(JSON.stringify({
+    action: 'reset game'
+  }));
 }
 function resetGame() {
   const wonState = () => {
@@ -354,11 +367,14 @@ function resetGame() {
     }
     return 0
   }
-  ws.send(`{"action": "game end", "data": {
-    "is_won": ${wonState()},
-    "user_id": "${authStore?.user?.id}",
-    "versus_player_nickname": "${versus.value}"
-  }}`)
+  ws.send(JSON.stringify({
+    "action": "game end",
+    "data": {
+      "is_won": wonState(),
+      "user_id": authStore?.user?.id,
+      "versus_player_nickname": versus.value
+      }
+  }))
   gameStarted.value = 0;
   wonFlag.value = 0;
   resetCounting();
@@ -396,12 +412,17 @@ function resizeBoard(size: number) {
   rowsAndColumns.value += size;
   resizeCountingArrays();
   resetGameBoardCells();
-  ws.send(`{"action":"resize", "size": ${rowsAndColumns.value}}`);
+  ws.send(JSON.stringify({
+    action: "resize",
+    size: rowsAndColumns.value
+  }))
 }
 function exitFromRoom() {
   console.log(authStore?.user.id === roomInfo.value.creator_id)
   if (versus.value !== null && authStore?.user.id === roomInfo.value.creator_id) {
-    ws.send(`{"action": "close room"}`)
+    ws.send(JSON.stringify({
+      action: "close room"
+    }))
     axios.delete(apiRooms.urls.room(props.roomId))
   }
   router.push({ name: "index" })
