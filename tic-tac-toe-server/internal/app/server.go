@@ -22,7 +22,7 @@ func RunHttpServer() {
 	defer stop()
 	go func() {
 		server := &http.Server{
-			Addr:    fmt.Sprintf("192.168.1.4:%s", config.ServerConfig.Port),
+			Addr:    fmt.Sprintf("192.168.1.3:%s", config.ServerConfig.Port),
 			Handler: router.NewRouter(dependency.NewAppDependencies()),
 		}
 		slog.Info(
