@@ -21,13 +21,14 @@ func RunHttpServer() {
 	)
 	defer stop()
 	go func() {
+		addr := fmt.Sprintf("%s:%s", config.ServerConfig.LocalIP, config.ServerConfig.Port)
 		server := &http.Server{
-			Addr:    fmt.Sprintf("192.168.1.4:%s", config.ServerConfig.Port),
+			Addr:    addr,
 			Handler: router.NewRouter(dependency.NewAppDependencies()),
 		}
 		slog.Info(
-			fmt.Sprintf("Http Server start on port :%s",
-				config.ServerConfig.Port,
+			fmt.Sprintf("Http Server start on address %s",
+				addr,
 			),
 		)
 		server.ListenAndServe()
