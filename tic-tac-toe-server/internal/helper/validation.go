@@ -36,7 +36,6 @@ func LocalizedValidationMessages(
 	locale, ok := ctx.Value("locale").(string)
 	if !ok {
 		locale = "en"
-		// return nil, errors.New("value is not correct")
 	}
 	if locale == "" {
 		return nil, errors.New("locale is not set")
@@ -56,9 +55,7 @@ func LocalizedValidationMessages(
 				"{param}", getAttribute(locale, strcase.ToSnake(err.Param())),
 			)
 		}
-
 		validatedMessages[strcase.ToSnake(err.Field())] = res
 	}
-
 	return validatedMessages, nil
 }
