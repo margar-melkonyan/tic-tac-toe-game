@@ -191,8 +191,6 @@ function connectToRoom(id: string, password: string) {
         break;
       case "choose symbol":
         mySymbol.value = ""
-        versus.value = ""
-        console.log(versus.value)
         if(authStore?.user?.id === data.user_id) {
           chooseSymbolDialog.value = true
         } else {

@@ -1,5 +1,9 @@
 package service
 
+// board parameters
+const DEFAULT_BORDER_SIZE = 3
+const DEFAULT_PLAYER = "X"
+
 // actions
 const stepAction = "step"
 const syncSymbolAction = "sync symbol"
@@ -15,6 +19,6 @@ const closeRoomAction = "close room"
 const exitRoomAction = "exit room"
 const newConnectionToRoomAction = "new connection to room"
 
-// statuses
+// game statuses
 const chooseSymbolStatus = "choose symbol"
 const inProcessStatus = "in process"

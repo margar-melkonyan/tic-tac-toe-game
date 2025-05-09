@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"log"
 	"log/slog"
 
@@ -31,9 +32,10 @@ func (ws *WSServer) addUser(currentUser *common.User, room *common.RoomSessionRe
 
 	if ws.Rooms[room.ID] == nil {
 		ws.Rooms[room.ID] = &RoomServer{
-			ID:        room.ID,
-			Users:     make([]*ConnectedUser, 0),
-			Positions: make([]*SymbolPosition, 0),
+			ID:         room.ID,
+			Users:      make([]*ConnectedUser, 0),
+			Positions:  make([]*SymbolPosition, 0),
+			BorderSize: DEFAULT_BORDER_SIZE,
 		}
 	}
 	if !ws.isUserInRoom(currentUser.ID, room.ID) {
@@ -78,6 +80,61 @@ func (ws *WSServer) isRoomFull(userID uuid.UUID, roomID uint64, conn *websocket.
 		return true
 	}
 	return false
+}
+
+func (ws *WSServer) changeGameStatus(roomId uint64) {
+	currentRoom, exists := ws.Rooms[roomId]
+	if !exists {
+		return
+	}
+	if len(currentRoom.Users) == 2 {
+		var prev *ConnectedUser
+		for _, user := range currentRoom.Users {
+			if user.Symbol != "" {
+				if prev != nil {
+					prev.Symbol = opositeSymbol(user.Symbol)
+				}
+				break
+			}
+			prev = user
+		}
+	}
+	isAllUserSelectedSymbol := 0
+	for _, user := range currentRoom.Users {
+		if user.Symbol != "" {
+			isAllUserSelectedSymbol += 1
+		}
+	}
+	if len(currentRoom.Users) == 2 && isAllUserSelectedSymbol == 2 {
+		currentRoom.GameStatus = inProcessStatus
+	}
+	ws.Mu.Lock()
+	defer ws.Mu.Unlock()
+
+	firstPlayerSymbol := ""
+	secondarySymbol := ""
+	for _, user := range currentRoom.Users {
+		if user.Symbol != "" {
+			firstPlayerSymbol = user.Symbol
+		}
+		if user.Symbol == "" {
+			secondarySymbol = opositeSymbol(firstPlayerSymbol)
+			if secondarySymbol != "" {
+				user.Symbol = secondarySymbol
+				resp := &GameReponse{
+					Action: syncSymbolAction,
+					Symbol: secondarySymbol,
+				}
+				raw, err := json.Marshal(resp)
+				if err == nil && user.Connection != nil {
+					user.Connection.WriteMessage(
+						websocket.TextMessage,
+						raw,
+					)
+				}
+			}
+		}
+	}
 }
 
 func (ws *WSServer) broadcastMessageToOther(
