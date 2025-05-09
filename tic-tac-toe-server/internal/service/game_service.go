@@ -74,8 +74,6 @@ type WSServer struct {
 	Mu           sync.Mutex
 }
 
-var wsRooms map[uint64]*RoomServer
-
 type GameRequest struct {
 	Action     string      `json:"action,omitempty"`
 	Data       interface{} `json:"data,omitempty"`
@@ -104,6 +102,9 @@ func (ws *WSServer) GameLoop(
 	room *common.RoomSessionResponse,
 	conn *websocket.Conn,
 ) bool {
+	// if ws.Rooms[room.ID] != nil {
+	// 	fmt.Println(ws.Rooms[room.ID].Users[0], len(ws.Rooms[room.ID].Users))
+	// }
 	if ws.isRoomFull(currentUser.ID, room.ID, conn) {
 		return true
 	}
@@ -124,9 +125,6 @@ func (ws *WSServer) GameLoop(
 			"[wss]GameRequest",
 			slog.String("error", err.Error()),
 		)
-	}
-	if ws.Rooms != nil {
-		wsRooms = ws.Rooms
 	}
 	slog.Info(
 		"[wss]GameRequest",

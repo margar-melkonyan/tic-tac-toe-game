@@ -29,6 +29,8 @@ func (service *RoomService) GetAll(ctx context.Context, ws *WSServer) []*common.
 	var roomsResponse []*common.RoomResponse
 	roomsResponse = make([]*common.RoomResponse, 0)
 
+	ws.Mu.Lock()
+	defer ws.Mu.Unlock()
 	for _, room := range rooms {
 		playerIn := 0
 		roomInfo := ws.Rooms[room.ID]
@@ -72,6 +74,8 @@ func (service *RoomService) GetAllMy(ctx context.Context, ws *WSServer) []*commo
 	rooms, err := service.repo.FindAll(ctx)
 	var roomsResponse []*common.RoomResponse
 	roomsResponse = make([]*common.RoomResponse, 0)
+	ws.Mu.Lock()
+	defer ws.Mu.Unlock()
 	for _, room := range rooms {
 		playerIn := 0
 		roomInfo := ws.Rooms[room.ID]
@@ -107,6 +111,8 @@ func (service *RoomService) GetById(ctx context.Context, id uint64, ws *WSServer
 		return nil, fmt.Errorf("room with ID %d not found", id)
 	}
 	users := make([]*common.UserResponse, 0)
+	ws.Mu.Lock()
+	defer ws.Mu.Unlock()
 	roomSession := ws.Rooms[room.ID]
 	if roomSession != nil {
 		for _, user := range roomSession.Users {

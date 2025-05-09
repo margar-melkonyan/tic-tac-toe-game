@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -175,6 +177,7 @@ func (ws *WSServer) handleExitRoom(
 	room *common.RoomSessionResponse,
 	conn *websocket.Conn,
 ) {
+	log.Println("User  exiting room:", currentUserID)
 	var versusPlayer ConnectedUser
 	currentRoom := ws.Rooms[room.ID]
 	var wonPlayerIndex int
@@ -213,15 +216,16 @@ func (ws *WSServer) handleExitRoom(
 		Symbol: DEFAULT_PLAYER,
 	}
 	ws.jsonToOther(currentUserID, room, response)
-	ws.CloseConnection(room.ID, conn)
 
 	ws.Mu.Lock()
-	newUsers := []*ConnectedUser{
-		currentRoom.Users[wonPlayerIndex],
-	}
-	currentRoom.Users = newUsers
-	wsRooms = ws.Rooms
-	ws.Mu.Unlock()
+	defer ws.Mu.Unlock()
+	currentRoom.Users = []*ConnectedUser{currentRoom.Users[wonPlayerIndex]}
+	fmt.Println(ws.Rooms[room.ID].Users, ws.Rooms[room.ID].Users[0])
+	conn.WriteMessage(
+		websocket.CloseMessage,
+		websocket.FormatCloseMessage(websocket.CloseNormalClosure, "connection is close"),
+	)
+	conn.Close()
 }
 
 func (ws *WSServer) handleGameEnd(
@@ -229,6 +233,7 @@ func (ws *WSServer) handleGameEnd(
 	room *common.RoomSessionResponse,
 	request *GameRequest,
 ) {
+	log.Println("Game ended for user:", currentUserID)
 	rawGameEndJson, ok := request.Data.(map[string]interface{})
 	if !ok {
 		return
