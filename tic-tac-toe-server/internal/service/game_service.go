@@ -99,10 +99,6 @@ func NewWsServer(scoreService *ScoreService) *WSServer {
 	}
 }
 
-func GetCurrentRoomInfo(roomID uint64) *RoomServer {
-	return wsRooms[roomID]
-}
-
 func (ws *WSServer) GameLoop(
 	currentUser *common.User,
 	room *common.RoomSessionResponse,

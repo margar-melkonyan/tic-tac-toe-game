@@ -10,13 +10,9 @@ import (
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/service"
 )
 
-var ws *service.WSServer
-
 func EnterRoom(deps *dependency.AppDependencies) http.HandlerFunc {
-	ws = service.NewWsServer(
-		service.NewScoreService(deps.ScoreRepository, deps.UserRepository),
-	)
 	return func(w http.ResponseWriter, r *http.Request) {
+		ws := deps.WSServer
 		conn, err := service.Upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			slog.Error(
@@ -25,7 +21,7 @@ func EnterRoom(deps *dependency.AppDependencies) http.HandlerFunc {
 			)
 			return
 		}
-		resp := deps.RoomHandler.GetRoomInfo(r)
+		resp := deps.RoomHandler.GetRoomInfo(r, ws)
 		room, isRoomExist := resp.Data.(*common.RoomSessionResponse)
 		currentUser, isUserExist := r.Context().Value(common.USER).(*common.User)
 		if !isRoomExist {

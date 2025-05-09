@@ -24,21 +24,25 @@ func NewRoomHandler(service service.RoomService) *RoomHandler {
 	}
 }
 
-func (h *RoomHandler) GetRooms(w http.ResponseWriter, r *http.Request) {
-	resp := helper.Response{}
-	data := h.service.GetAll(r.Context())
-	resp.Data = data
-	resp.ResponseWrite(w, r, http.StatusOK)
+func (h *RoomHandler) GetRooms(ws *service.WSServer) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		resp := helper.Response{}
+		data := h.service.GetAll(r.Context(), ws)
+		resp.Data = data
+		resp.ResponseWrite(w, r, http.StatusOK)
+	}
 }
 
-func (h *RoomHandler) GetMyRooms(w http.ResponseWriter, r *http.Request) {
-	resp := helper.Response{}
-	data := h.service.GetAllMy(r.Context())
-	resp.Data = data
-	resp.ResponseWrite(w, r, http.StatusOK)
+func (h *RoomHandler) GetMyRooms(ws *service.WSServer) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		resp := helper.Response{}
+		data := h.service.GetAllMy(r.Context(), ws)
+		resp.Data = data
+		resp.ResponseWrite(w, r, http.StatusOK)
+	}
 }
 
-func (h *RoomHandler) GetRoomInfo(r *http.Request) helper.Response {
+func (h *RoomHandler) GetRoomInfo(r *http.Request, ws *service.WSServer) helper.Response {
 	resp := helper.Response{}
 	param := chi.URLParam(r, "id")
 	id, err := strconv.ParseUint(param, 10, 64)
@@ -46,7 +50,7 @@ func (h *RoomHandler) GetRoomInfo(r *http.Request) helper.Response {
 		resp.Errors = err
 		return resp
 	}
-	data, err := h.service.GetById(r.Context(), id)
+	data, err := h.service.GetById(r.Context(), id, ws)
 	if err != nil {
 		resp.Errors = err.Error()
 		return resp
@@ -55,9 +59,11 @@ func (h *RoomHandler) GetRoomInfo(r *http.Request) helper.Response {
 	return resp
 }
 
-func (h *RoomHandler) GetRoom(w http.ResponseWriter, r *http.Request) {
-	resp := h.GetRoomInfo(r)
-	resp.ResponseWrite(w, r, http.StatusOK)
+func (h *RoomHandler) GetRoom(ws *service.WSServer) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		resp := h.GetRoomInfo(r, ws)
+		resp.ResponseWrite(w, r, http.StatusOK)
+	}
 }
 
 func (h *RoomHandler) CreateRoom(w http.ResponseWriter, r *http.Request) {

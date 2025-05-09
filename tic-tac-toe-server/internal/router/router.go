@@ -19,7 +19,7 @@ func NewRouter(deps *dependency.AppDependencies) *chi.Mux {
 
 	route.Route("/auth", authRouterGroup)
 	route.Route("/api", func(api chi.Router) {
-		api.Get("/v1/rooms", dependencies.RoomHandler.GetRooms)
+		api.Get("/v1/rooms", dependencies.RoomHandler.GetRooms(dependencies.WSServer))
 		api.Route("/v1", func(v1 chi.Router) {
 			v1.Use(middleware.AuthMiddleware(deps))
 			v1.Route("/rooms", roomsRouterGroup)

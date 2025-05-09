@@ -19,6 +19,7 @@ type AppDependencies struct {
 	ScoreHandler http_handler.ScoreHandler
 	UserHandler  http_handler.UserHandler
 	AuthHandler  http_handler.AuthHandler
+	WSServer     *service.WSServer
 	GlobalRepositories
 }
 
@@ -53,6 +54,9 @@ func NewAppDependencies() *AppDependencies {
 		ScoreHandler: *scoreHandler,
 		UserHandler:  *userHandler,
 		AuthHandler:  *authHandler,
+		WSServer: service.NewWsServer(
+			service.NewScoreService(scoreRepo, userRepo),
+		),
 		GlobalRepositories: GlobalRepositories{
 			UserRepository:  userRepo,
 			ScoreRepository: scoreRepo,

@@ -24,14 +24,14 @@ func NewRoomService(repoRoom repository.RoomRepository) *RoomService {
 	}
 }
 
-func (service *RoomService) GetAll(ctx context.Context) []*common.RoomResponse {
+func (service *RoomService) GetAll(ctx context.Context, ws *WSServer) []*common.RoomResponse {
 	rooms, err := service.repo.FindAll(ctx)
 	var roomsResponse []*common.RoomResponse
 	roomsResponse = make([]*common.RoomResponse, 0)
 
 	for _, room := range rooms {
 		playerIn := 0
-		roomInfo := GetCurrentRoomInfo(room.ID)
+		roomInfo := ws.Rooms[room.ID]
 		if roomInfo != nil {
 			playerIn = len(roomInfo.Users)
 		}
@@ -64,7 +64,7 @@ func isUserInRoom(currentUser *common.User, users []*ConnectedUser) bool {
 	return false
 }
 
-func (service *RoomService) GetAllMy(ctx context.Context) []*common.RoomResponse {
+func (service *RoomService) GetAllMy(ctx context.Context, ws *WSServer) []*common.RoomResponse {
 	currentUser, ok := ctx.Value(common.USER).(*common.User)
 	if !ok {
 		return nil
@@ -74,7 +74,7 @@ func (service *RoomService) GetAllMy(ctx context.Context) []*common.RoomResponse
 	roomsResponse = make([]*common.RoomResponse, 0)
 	for _, room := range rooms {
 		playerIn := 0
-		roomInfo := GetCurrentRoomInfo(room.ID)
+		roomInfo := ws.Rooms[room.ID]
 		if roomInfo != nil {
 			playerIn = len(roomInfo.Users)
 		}
@@ -98,7 +98,7 @@ func (service *RoomService) GetAllMy(ctx context.Context) []*common.RoomResponse
 	return roomsResponse
 }
 
-func (service *RoomService) GetById(ctx context.Context, id uint64) (*common.RoomSessionResponse, error) {
+func (service *RoomService) GetById(ctx context.Context, id uint64, ws *WSServer) (*common.RoomSessionResponse, error) {
 	room, err := service.repo.FindById(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find room with ID %d: %w", id, err)
@@ -107,7 +107,7 @@ func (service *RoomService) GetById(ctx context.Context, id uint64) (*common.Roo
 		return nil, fmt.Errorf("room with ID %d not found", id)
 	}
 	users := make([]*common.UserResponse, 0)
-	roomSession := GetCurrentRoomInfo(room.ID)
+	roomSession := ws.Rooms[room.ID]
 	if roomSession != nil {
 		for _, user := range roomSession.Users {
 			users = append(users, &common.UserResponse{
