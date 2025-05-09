@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -176,9 +175,6 @@ func (ws *WSServer) handleExitRoom(
 	room *common.RoomSessionResponse,
 	conn *websocket.Conn,
 ) {
-	ws.Mu.Lock()         // Блокируем доступ к данным
-	defer ws.Mu.Unlock() // Разблокируем доступ после завершения работы с данными
-
 	var versusPlayer ConnectedUser
 	currentRoom := ws.Rooms[room.ID]
 	var wonPlayerIndex int
@@ -194,7 +190,6 @@ func (ws *WSServer) handleExitRoom(
 		}
 	}
 	for _, user := range currentRoom.Users {
-		fmt.Println(user)
 		if currentUserID == user.ID {
 			ws.ScoreService.scoreRepo.Create(context.Background(), &common.Score{
 				IsWon:    0,
@@ -204,8 +199,13 @@ func (ws *WSServer) handleExitRoom(
 		}
 	}
 
-	currentRoom.Positions = make([]*SymbolPosition, 0)
 	response := &GameReponse{
+		Action: chooseSymbolAction,
+		UserID: &versusPlayer.ID,
+	}
+	ws.jsonToOther(currentUserID, room, response)
+	currentRoom.Positions = make([]*SymbolPosition, 0)
+	response = &GameReponse{
 		Action: getPositionsAction,
 		Data: map[string]interface{}{
 			"positions": currentRoom.Positions,
@@ -213,16 +213,15 @@ func (ws *WSServer) handleExitRoom(
 		Symbol: DEFAULT_PLAYER,
 	}
 	ws.jsonToOther(currentUserID, room, response)
-	response = &GameReponse{
-		Action: chooseSymbolAction,
-		UserID: &versusPlayer.ID,
-	}
-	ws.jsonToOther(currentUserID, room, response)
 	ws.CloseConnection(room.ID, conn)
+
+	ws.Mu.Lock()
 	newUsers := []*ConnectedUser{
 		currentRoom.Users[wonPlayerIndex],
 	}
 	currentRoom.Users = newUsers
+	wsRooms = ws.Rooms
+	ws.Mu.Unlock()
 }
 
 func (ws *WSServer) handleGameEnd(

@@ -34,10 +34,28 @@
         :exit-from-room="exitFromRoom"
       />
     </v-row>
-    <v-row class="d-flex justify-center my-4">
-      <span>
-        Ходит игрок: {{ currentPlayer }}
+    <v-row
+      v-if="wonFlag === 0"
+      class="d-flex justify-center my-4"
+    >
+      <span
+        v-if="mySymbol === currentPlayer"
+        style="color: yellowgreen;"
+      >
+        Ваш ход
       </span>
+      <span
+        v-else
+        style="color: red;"
+      >
+        Ходит {{ versus }}
+      </span>
+    </v-row>
+    <v-row
+      v-else
+      class="d-flex justify-center my-4"
+    >
+      Игра окончена!
     </v-row>
     <v-row class="d-flex justify-center my-8">
       <GameBoardComponent
