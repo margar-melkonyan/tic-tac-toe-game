@@ -3,8 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"log"
+	"log/slog"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -20,6 +19,7 @@ func (ws *WSServer) handleStep(room *common.RoomSessionResponse, request *GameRe
 			ID:     rawSymbolPosition["id"].(string),
 			Symbol: rawSymbolPosition["symbol"].(string),
 		}
+		currentRoom.GameStatus = inProcessStatus
 		currentRoom.Positions = append(currentRoom.Positions, symbolPosition)
 		ws.jsonToAll(room, &GameReponse{
 			Action: getPositionsAction,
@@ -115,62 +115,67 @@ func (ws *WSServer) handleNewConnection(
 		},
 		Symbol: currentPlayerStep,
 	})
-
-	ws.changeGameStatus(room.ID)
+	ws.setSecondUserSymbol(room.ID)
 }
 
 func (ws *WSServer) handleExitRoom(
-	currentUserID uuid.UUID,
+	currentUser *common.User,
 	room *common.RoomSessionResponse,
 	conn *websocket.Conn,
-) {
-	log.Println("User  exiting room:", currentUserID)
-	var versusPlayer ConnectedUser
+) bool {
+	slog.Info(
+		"User  exiting room:",
+		slog.String("user_id", currentUser.ID.String()),
+	)
+
 	currentRoom := ws.Rooms[room.ID]
-	var wonPlayerIndex int
-	for index, user := range currentRoom.Users {
-		if user.ID != currentUserID {
-			versusPlayer = *user
-			wonPlayerIndex = index
-			ws.ScoreService.scoreRepo.Create(context.Background(), &common.Score{
-				IsWon:    1,
-				UserID:   versusPlayer.ID.String(),
-				Nickname: user.Name,
-			})
-		}
-	}
+	var versusPlayer *ConnectedUser
 	for _, user := range currentRoom.Users {
-		if currentUserID == user.ID {
-			ws.ScoreService.scoreRepo.Create(context.Background(), &common.Score{
-				IsWon:    0,
-				UserID:   user.ID.String(),
-				Nickname: versusPlayer.Name,
-			})
+		if currentUser.ID != user.ID {
+			versusPlayer = user
+			break
 		}
 	}
 
-	ws.jsonToOther(currentUserID, room, &GameReponse{
-		Action: chooseSymbolAction,
-		UserID: &versusPlayer.ID,
-	})
-	currentRoom.Positions = make([]*SymbolPosition, 0)
-	ws.jsonToOther(currentUserID, room, &GameReponse{
-		Action: getPositionsAction,
-		Data: map[string]interface{}{
-			"positions": currentRoom.Positions,
-		},
-		Symbol: DEFAULT_PLAYER,
-	})
-	currentRoom.GameStatus = chooseSymbolStatus
-	ws.Mu.Lock()
-	defer ws.Mu.Unlock()
-	currentRoom.Users = []*ConnectedUser{currentRoom.Users[wonPlayerIndex]}
-	fmt.Println(ws.Rooms[room.ID].Users, ws.Rooms[room.ID].Users[0])
+	if versusPlayer != nil {
+		if currentRoom.GameStatus == inProcessStatus {
+			ws.ScoreService.scoreRepo.Create(context.Background(), &common.Score{
+				IsWon:    1,
+				UserID:   versusPlayer.ID.String(),
+				Nickname: currentUser.Name,
+			})
+			ws.ScoreService.scoreRepo.Create(context.Background(), &common.Score{
+				IsWon:    0,
+				UserID:   currentUser.ID.String(),
+				Nickname: versusPlayer.Name,
+			})
+		}
+
+		ws.jsonToOther(currentUser.ID, room, &GameReponse{
+			Action: chooseSymbolAction,
+			UserID: &versusPlayer.ID,
+		})
+		currentRoom.Positions = make([]*SymbolPosition, 0)
+		ws.jsonToOther(currentUser.ID, room, &GameReponse{
+			Action: getPositionsAction,
+			Data: map[string]interface{}{
+				"positions": currentRoom.Positions,
+			},
+		})
+		currentRoom.GameStatus = chooseSymbolStatus
+		ws.Mu.Lock()
+		defer ws.Mu.Unlock()
+		versusPlayer.Symbol = ""
+		currentRoom.Users = []*ConnectedUser{
+			versusPlayer,
+		}
+	}
 	conn.WriteMessage(
 		websocket.CloseMessage,
 		websocket.FormatCloseMessage(websocket.CloseNormalClosure, "connection is close"),
 	)
 	conn.Close()
+	return true
 }
 
 func (ws *WSServer) handleGameEnd(
@@ -178,7 +183,10 @@ func (ws *WSServer) handleGameEnd(
 	room *common.RoomSessionResponse,
 	request *GameRequest,
 ) {
-	log.Println("Game ended for user:", currentUserID)
+	slog.Info(
+		"Game ended for user:",
+		slog.String("user_id", currentUserID.String()),
+	)
 	rawGameEndJson, ok := request.Data.(map[string]interface{})
 	if !ok {
 		return
@@ -200,6 +208,7 @@ func (ws *WSServer) handleGameEnd(
 		UserID:   userID,
 		Nickname: nickname,
 	}
+	ws.Rooms[room.ID].GameStatus = gameEndStatus
 	ws.ScoreService.scoreRepo.Create(context.Background(), score)
 	ws.jsonToOther(
 		currentUserID,

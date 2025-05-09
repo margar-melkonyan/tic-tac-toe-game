@@ -26,18 +26,22 @@ func opositeSymbol(mainSymbol string) string {
 	return opositeSymbol
 }
 
-func (ws *WSServer) addUser(currentUser *common.User, room *common.RoomSessionResponse, conn *websocket.Conn) {
-	ws.Mu.Lock()
-	defer ws.Mu.Unlock()
-
-	if ws.Rooms[room.ID] == nil {
-		ws.Rooms[room.ID] = &RoomServer{
-			ID:         room.ID,
+func (ws *WSServer) createRoom(roomID uint64) {
+	if ws.Rooms[roomID] == nil {
+		ws.Rooms[roomID] = &RoomServer{
+			ID:         roomID,
 			Users:      make([]*ConnectedUser, 0),
 			Positions:  make([]*SymbolPosition, 0),
 			BorderSize: DEFAULT_BORDER_SIZE,
 		}
 	}
+}
+
+func (ws *WSServer) addUser(currentUser *common.User, room *common.RoomSessionResponse, conn *websocket.Conn) {
+	ws.Mu.Lock()
+	defer ws.Mu.Unlock()
+	ws.createRoom(room.ID)
+
 	if !ws.isUserInRoom(currentUser.ID, room.ID) {
 		ws.Rooms[room.ID].Users = append(
 			ws.Rooms[room.ID].Users,
@@ -82,7 +86,7 @@ func (ws *WSServer) isRoomFull(userID uuid.UUID, roomID uint64, conn *websocket.
 	return false
 }
 
-func (ws *WSServer) changeGameStatus(roomId uint64) {
+func (ws *WSServer) setSecondUserSymbol(roomId uint64) {
 	currentRoom, exists := ws.Rooms[roomId]
 	if !exists {
 		return
@@ -99,18 +103,6 @@ func (ws *WSServer) changeGameStatus(roomId uint64) {
 			prev = user
 		}
 	}
-	isAllUserSelectedSymbol := 0
-	for _, user := range currentRoom.Users {
-		if user.Symbol != "" {
-			isAllUserSelectedSymbol += 1
-		}
-	}
-	if len(currentRoom.Users) == 2 && isAllUserSelectedSymbol == 2 {
-		currentRoom.GameStatus = inProcessStatus
-	}
-	ws.Mu.Lock()
-	defer ws.Mu.Unlock()
-
 	firstPlayerSymbol := ""
 	secondarySymbol := ""
 	for _, user := range currentRoom.Users {

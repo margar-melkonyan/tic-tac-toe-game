@@ -35,7 +35,7 @@
       />
     </v-row>
     <v-row
-      v-if="wonFlag === 0"
+      v-if="wonFlag === 0 && versus !== null"
       class="d-flex justify-center my-4"
     >
       <span
@@ -52,7 +52,7 @@
       </span>
     </v-row>
     <v-row
-      v-else
+      v-if="wonFlag !== 0 && versus !== null"
       class="d-flex justify-center my-4"
     >
       Игра окончена!
@@ -172,7 +172,6 @@ function connectToRoom(id: string, password: string) {
         break;
       case "get positions":
         const positions = data.data.positions;
-        console.log(positions)
         positions.forEach((position) => {
           const pos = position.id.split("-");
           const i = Number(pos[0]);
@@ -183,6 +182,7 @@ function connectToRoom(id: string, password: string) {
         if (positions.length === 0) {
           resetGame();
           fetchRoom();
+          currentPlayer.value = "X"
         }
         break;
       case "resize":

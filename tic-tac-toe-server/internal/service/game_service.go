@@ -130,14 +130,13 @@ func (ws *WSServer) GameLoop(
 		"[wss]GameRequest",
 		slog.Any("data", request),
 	)
-	ws.proccessCommand(
+	return ws.proccessCommand(
 		currentUser,
 		room,
 		request,
 		p,
 		conn,
 	)
-	return false
 }
 
 func (ws *WSServer) RefreshConnection(currentUser *common.User, room *common.RoomSessionResponse, conn *websocket.Conn) {
@@ -192,7 +191,7 @@ func (ws *WSServer) proccessCommand(
 	request GameRequest,
 	message []byte,
 	conn *websocket.Conn,
-) {
+) bool {
 	switch request.Action {
 	case stepAction:
 		ws.handleStep(room, &request)
@@ -218,8 +217,8 @@ func (ws *WSServer) proccessCommand(
 			&request,
 		)
 	case exitRoomAction:
-		ws.handleExitRoom(
-			currentUser.ID,
+		return ws.handleExitRoom(
+			currentUser,
 			room,
 			conn,
 		)
@@ -233,4 +232,5 @@ func (ws *WSServer) proccessCommand(
 			conn,
 		)
 	}
+	return false
 }

@@ -22,3 +22,4 @@ const newConnectionToRoomAction = "new connection to room"
 // game statuses
 const chooseSymbolStatus = "choose symbol"
 const inProcessStatus = "in process"
+const gameEndStatus = "game end"
