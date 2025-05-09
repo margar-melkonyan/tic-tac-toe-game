@@ -10,6 +10,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+const DEFAULT_BORDER_SIZE = 3
+const DEFAULT_PLAYER = "X"
+
 func (ws *WSServer) handleStep(room *common.RoomSessionResponse, request *GameRequest) {
 	rawSymbolPosition, ok := request.Data.(map[string]interface{})
 	if ok {
@@ -40,19 +43,19 @@ func (ws *WSServer) handleResetGame(room *common.RoomSessionResponse) {
 }
 
 func (ws *WSServer) handleBorderResize(
-	currentUserId uuid.UUID,
+	currentUserID uuid.UUID,
 	room *common.RoomSessionResponse,
 	request *GameRequest,
 	message []byte,
 ) {
-	if currentUserId == room.CreatorID {
+	if currentUserID == room.CreatorID {
 		ws.Rooms[room.ID].BorderSize = request.BorderSize
-		ws.broadcastMessageToOther(currentUserId, room, message)
+		ws.broadcastMessageToOther(currentUserID, room, message)
 	}
 }
 
 func (ws *WSServer) handleSelectSymbol(
-	currentUserId uuid.UUID,
+	currentUserID uuid.UUID,
 	room *common.RoomSessionResponse,
 	request *GameRequest,
 ) {
@@ -61,7 +64,7 @@ func (ws *WSServer) handleSelectSymbol(
 		if user.Symbol != "" {
 			continue
 		}
-		if user.ID == currentUserId {
+		if user.ID == currentUserID {
 			currentRoom.Users[id].Symbol = request.Symbol
 		} else {
 			currentRoom.Users[id].Symbol = opositeSymbol(request.Symbol)
@@ -71,11 +74,11 @@ func (ws *WSServer) handleSelectSymbol(
 		Action: selectedSymbolAction,
 		Symbol: opositeSymbol(request.Symbol),
 	}
-	ws.jsonToOther(currentUserId, room, response)
+	ws.jsonToOther(currentUserID, room, response)
 }
 
 func (ws *WSServer) handleNewConnection(
-	currentUserId uuid.UUID,
+	currentUserID uuid.UUID,
 	room *common.RoomSessionResponse,
 	request *GameRequest,
 	conn *websocket.Conn,
@@ -93,11 +96,11 @@ func (ws *WSServer) handleNewConnection(
 	}
 	response := &GameReponse{
 		Action: newConnectionToRoomAction,
-		UserID: &currentUserId,
+		UserID: &currentUserID,
 	}
 	ws.jsonToAll(room, response)
 	if currentRoom.BorderSize == 0 {
-		currentRoom.BorderSize = 3
+		currentRoom.BorderSize = DEFAULT_BORDER_SIZE
 	}
 	response = &GameReponse{
 		Action:      resizeAction,
@@ -167,20 +170,87 @@ func (ws *WSServer) handleNewConnection(
 	}
 }
 
+func (ws *WSServer) handleExitRoom(
+	currentUserID uuid.UUID,
+	room *common.RoomSessionResponse,
+	conn *websocket.Conn,
+) {
+	var versusPlayer ConnectedUser
+	currentRoom := ws.Rooms[room.ID]
+	var wonPlayerIndex int
+	for index, user := range currentRoom.Users {
+		if user.ID != currentUserID {
+			versusPlayer = *user
+			wonPlayerIndex = index
+			ws.ScoreService.scoreRepo.Create(context.Background(), &common.Score{
+				IsWon:    1,
+				UserID:   versusPlayer.ID.String(),
+				Nickname: user.Name,
+			})
+		}
+	}
+	for _, user := range currentRoom.Users {
+		if currentUserID == user.ID {
+			ws.ScoreService.scoreRepo.Create(context.Background(), &common.Score{
+				IsWon:    0,
+				UserID:   user.ID.String(),
+				Nickname: versusPlayer.Name,
+			})
+		}
+	}
+
+	response := &GameReponse{
+		Action: chooseSymbolAction,
+		UserID: &versusPlayer.ID,
+	}
+	ws.jsonToOther(currentUserID, room, response)
+	currentRoom.Positions = make([]*SymbolPosition, 0)
+	response = &GameReponse{
+		Action: getPositionsAction,
+		Data: map[string]interface{}{
+			"positions": currentRoom.Positions,
+		},
+		Symbol: DEFAULT_PLAYER,
+	}
+	ws.jsonToOther(currentUserID, room, response)
+	ws.CloseConnection(room.ID, conn)
+
+	ws.Mu.Lock()
+	newUsers := []*ConnectedUser{
+		currentRoom.Users[wonPlayerIndex],
+	}
+	currentRoom.Users = newUsers
+	wsRooms = ws.Rooms
+	ws.Mu.Unlock()
+}
+
 func (ws *WSServer) handleGameEnd(
 	currentUserID uuid.UUID,
 	room *common.RoomSessionResponse,
 	request *GameRequest,
 ) {
 	rawGameEndJson, ok := request.Data.(map[string]interface{})
-	if ok {
-		score := &common.Score{
-			IsWon:    rawGameEndJson["is_won"].(float64),
-			UserID:   rawGameEndJson["user_id"].(string),
-			Nickname: rawGameEndJson["versus_player_nickname"].(string),
-		}
-		ws.ScoreService.scoreRepo.Create(context.Background(), score)
+	if !ok {
+		return
 	}
+	isWon, ok := rawGameEndJson["is_won"].(float64)
+	if !ok {
+		return
+	}
+	userID, ok := rawGameEndJson["user_id"].(string)
+	if !ok {
+		return
+	}
+	nickname, ok := rawGameEndJson["versus_player_nickname"].(string)
+	if !ok {
+		return
+	}
+	score := &common.Score{
+		IsWon:    isWon,
+		UserID:   userID,
+		Nickname: nickname,
+	}
+	ws.ScoreService.scoreRepo.Create(context.Background(), score)
 	ws.jsonToOther(
 		currentUserID,
 		room, &GameReponse{

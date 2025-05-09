@@ -223,6 +223,12 @@ func (ws *WSServer) proccessCommand(
 			room,
 			&request,
 		)
+	case exitRoomAction:
+		ws.handleExitRoom(
+			currentUser.ID,
+			room,
+			conn,
+		)
 	case closeRoomAction:
 		ws.handleCloseRoom(ws.Rooms[room.ID])
 	case newConnectionToRoomAction:

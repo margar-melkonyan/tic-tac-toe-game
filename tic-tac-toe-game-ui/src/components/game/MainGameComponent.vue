@@ -34,10 +34,28 @@
         :exit-from-room="exitFromRoom"
       />
     </v-row>
-    <v-row class="d-flex justify-center my-4">
-      <span>
-        Ходит игрок: {{ currentPlayer }}
+    <v-row
+      v-if="wonFlag === 0"
+      class="d-flex justify-center my-4"
+    >
+      <span
+        v-if="mySymbol === currentPlayer"
+        style="color: yellowgreen;"
+      >
+        Ваш ход
       </span>
+      <span
+        v-else
+        style="color: red;"
+      >
+        Ходит {{ versus }}
+      </span>
+    </v-row>
+    <v-row
+      v-else
+      class="d-flex justify-center my-4"
+    >
+      Игра окончена!
     </v-row>
     <v-row class="d-flex justify-center my-8">
       <GameBoardComponent
@@ -66,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-import { getCurrentInstance, ref, computed } from 'vue';
+import { getCurrentInstance, ref, computed, watch } from 'vue';
 import axios from "axios";
 import { useAuthStore } from "@/stores/auth";
 import { useRouter } from "vue-router"
@@ -76,7 +94,6 @@ import GameBoardComponent from './GameBoardComponent.vue';
 import GameControlsComponent from './GameControlsComponent.vue';
 import GameResultComponent from './GameResultComponent.vue';
 import { toast } from "vue3-toastify";
-import {c} from "unplugin-vue-router/types-DBiN4-4c";
 
 const { proxy } = getCurrentInstance();
 const apiRooms = proxy.$api.rooms;
@@ -155,6 +172,7 @@ function connectToRoom(id: string, password: string) {
         break;
       case "get positions":
         const positions = data.data.positions;
+        console.log(positions)
         positions.forEach((position) => {
           const pos = position.id.split("-");
           const i = Number(pos[0]);
@@ -162,12 +180,19 @@ function connectToRoom(id: string, password: string) {
           playerStep(i, j, position.symbol);
         });
         currentPlayer.value = data.symbol
+        if (positions.length === 0) {
+          resetGame();
+          fetchRoom();
+        }
         break;
       case "resize":
         rowsAndColumns.value = data.size;
         resizeCountingArrays();
         break;
       case "choose symbol":
+        mySymbol.value = ""
+        versus.value = ""
+        console.log(versus.value)
         if(authStore?.user?.id === data.user_id) {
           chooseSymbolDialog.value = true
         } else {
@@ -355,26 +380,6 @@ function doResetGame() {
   }));
 }
 function resetGame() {
-  const wonState = () => {
-    if (mySymbol.value === 'X' && wonFlag.value === 1) {
-      return 1
-    }
-    if (mySymbol.value === 'O' && wonFlag.value === -1) {
-      return 1
-    }
-    if (wonFlag.value === -2) {
-      return -1
-    }
-    return 0
-  }
-  ws.send(JSON.stringify({
-    "action": "game end",
-    "data": {
-      "is_won": wonState(),
-      "user_id": authStore?.user?.id,
-      "versus_player_nickname": versus.value
-      }
-  }))
   gameStarted.value = 0;
   wonFlag.value = 0;
   resetCounting();
@@ -418,15 +423,43 @@ function resizeBoard(size: number) {
   }))
 }
 function exitFromRoom() {
-  console.log(authStore?.user.id === roomInfo.value.creator_id)
   if (versus.value !== null && authStore?.user.id === roomInfo.value.creator_id) {
     ws.send(JSON.stringify({
       action: "close room"
     }))
     axios.delete(apiRooms.urls.room(props.roomId))
   }
+  if (authStore?.user.id !== roomInfo.value.creator_id) {
+    ws.send(JSON.stringify({
+      action: "exit room",
+    }))
+  }
   router.push({ name: "index" })
 }
+watch(wonFlag, function () {
+  const wonState = () => {
+    if (mySymbol.value === 'X' && wonFlag.value === 1) {
+      return 1
+    }
+    if (mySymbol.value === 'O' && wonFlag.value === -1) {
+      return 1
+    }
+    if (wonFlag.value === -2) {
+      return -1
+    }
+    return 0
+  }
+  if (wonFlag.value !== 0) {
+    ws.send(JSON.stringify({
+      "action": "game end",
+      "data": {
+        "is_won": wonState(),
+        "user_id": authStore?.user?.id,
+        "versus_player_nickname": versus.value
+        }
+    }))
+  }
+})
 </script>
 
 <style scoped>
