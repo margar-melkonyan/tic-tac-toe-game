@@ -15,7 +15,6 @@ type JWTConfig struct {
 }
 
 type ServerConfig struct {
-	LocalIP     string
 	Port        string
 	LogLevel    int8
 	BcryptPower int

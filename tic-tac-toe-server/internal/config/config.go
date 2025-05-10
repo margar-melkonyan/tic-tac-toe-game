@@ -30,7 +30,6 @@ func NewConfig() {
 		panic(err.Error())
 	}
 	ServerConfig = &common.ServerConfig{
-		LocalIP:     os.Getenv("SERVER_IP"),
 		Port:        os.Getenv("SERVER_PORT"),
 		LogLevel:    int8(logLevel),
 		BcryptPower: int(bcryptPower),
