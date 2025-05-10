@@ -1,5 +1,5 @@
 class BaseAPI {
-  public baseURL: string = 'http://192.168.1.4:8000'
+  public baseURL: string = process.env.VITE_API_URL
 }
 
 export default BaseAPI;

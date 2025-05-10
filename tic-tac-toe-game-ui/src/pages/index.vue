@@ -96,7 +96,7 @@ const changeTab = (tab: string) => {
   fetchRooms()
 }
 onMounted(() => {
-  intervalId = setInterval(fetchRooms, 10000)
+  intervalId = setInterval(fetchRooms, 2000)
   fetchRooms()
 })
 onBeforeUnmount(() => {

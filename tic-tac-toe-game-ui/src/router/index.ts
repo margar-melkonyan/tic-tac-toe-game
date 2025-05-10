@@ -14,13 +14,13 @@ const routes = [
   {
     path: '/',
     name: 'index',
-    component: Index,
+    component: () => import('@/pages/index.vue')
   },
   {
     path: '/rooms/:id',
     name: 'rooms.game',
     component:Room,
-    props: (route) => ({
+    props: (route: any) => ({
       room: route.params.room
     })
   }

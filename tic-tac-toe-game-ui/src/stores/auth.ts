@@ -4,11 +4,19 @@ import { defineStore } from 'pinia'
 import Form from 'vform';
 import { getCurrentInstance } from 'vue';
 
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  current_won_score?: number;
+  created_at?: string;
+}
+
 export const useAuthStore = defineStore('auth', () => {
   const { proxy } = getCurrentInstance();
   const apiAuth = proxy.$api.auth;
   const apiUsers = proxy.$api.users;
-  const user = ref(null);
+  const user= ref<User|null>(null);
 
   async function signIn(form: Form) {
     const { data, status } = await form.post(apiAuth.urls.signIn())
