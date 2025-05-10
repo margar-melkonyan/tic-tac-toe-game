@@ -14,7 +14,7 @@
       >
         <span
           class="no-select coming-soon-regular"
-          :style="props.getFontStyle()"
+          :style="props.getFontStyle(rowsAndColumns)"
         />
       </div>
     </div>

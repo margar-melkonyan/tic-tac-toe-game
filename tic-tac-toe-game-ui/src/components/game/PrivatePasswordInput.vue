@@ -21,7 +21,7 @@
     <v-divider />
     <v-card-actions>
       <v-col class="d-flex justify-start py-0">
-        <v-btn @click="exitRoom">
+        <v-btn @click="props.exitFromRoom()">
           {{ $t('rooms.exit') }}
         </v-btn>
       </v-col>
@@ -40,24 +40,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { getCurrentInstance, ref } from "vue";
+import { useAuthStore } from "@/stores/auth";
+const { proxy } = getCurrentInstance();
+
 const password = ref<string>("");
 const loading = ref<boolean>(false);
+const apiRooms = proxy.$api.rooms;
+const authStore = useAuthStore();
 const router = useRouter();
 const props = defineProps<{
   roomName: String,
   roomId: Number,
-  connectToRoom: Function,
+  wssConnect: Function,
+  exitFromRoom: Function,
 }>()
 const isHiddePassword = ref(true);
 const showPassword = () => {
   isHiddePassword.value = !isHiddePassword.value
 }
 const enterRoom = () => {
-  props.connectToRoom(props.roomId, password.value)
-}
-const exitRoom = () => {
-  router.push({ name: "index" })
+  props.wssConnect(props.roomId, password.value, apiRooms, authStore)
 }
 onMounted(() => {
   loading.value = true;
