@@ -1,3 +1,4 @@
+// Package router предоставляет функциональность для настройки маршрутизации HTTP запросов.
 package router
 
 import (
