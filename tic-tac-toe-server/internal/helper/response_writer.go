@@ -38,6 +38,7 @@ type ResponseWriter interface {
 //   - status: HTTP статус код ответа
 //
 // Действия:
+//
 //  1. Устанавливает Content-Type: application/json
 //  2. Записывает HTTP статус
 //  3. Сериализует ответ в JSON
