@@ -1,3 +1,4 @@
+// Package service реализует бизнес-логику приложения.
 package service
 
 import (
@@ -12,18 +13,21 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// RoomService предоставляет методы для управления игровыми комнатами.
 type RoomService struct {
 	repo repository.RoomRepository
 }
 
 const op = "room_serivce"
 
+// NewRoomService создаёт новый экземпляр RoomService с указанным репозиторием.
 func NewRoomService(repoRoom repository.RoomRepository) *RoomService {
 	return &RoomService{
 		repo: repoRoom,
 	}
 }
 
+// GetAll возвращает список всех доступных комнат, в которых есть свободные места.
 func (service *RoomService) GetAll(ctx context.Context, ws *WSServer) []*common.RoomResponse {
 	rooms, err := service.repo.FindAll(ctx)
 	var roomsResponse []*common.RoomResponse
@@ -57,6 +61,7 @@ func (service *RoomService) GetAll(ctx context.Context, ws *WSServer) []*common.
 	return roomsResponse
 }
 
+// isUserInRoom проверяет, присутствует ли пользователь в списке подключённых к комнате пользователей.
 func isUserInRoom(currentUser *common.User, users []*ConnectedUser) bool {
 	for _, user := range users {
 		if user.ID == currentUser.ID {
@@ -66,6 +71,7 @@ func isUserInRoom(currentUser *common.User, users []*ConnectedUser) bool {
 	return false
 }
 
+// GetAllMy возвращает комнаты, созданные или занятые текущим пользователем.
 func (service *RoomService) GetAllMy(ctx context.Context, ws *WSServer) []*common.RoomResponse {
 	currentUser, ok := ctx.Value(common.USER).(*common.User)
 	if !ok {
@@ -102,6 +108,7 @@ func (service *RoomService) GetAllMy(ctx context.Context, ws *WSServer) []*commo
 	return roomsResponse
 }
 
+// GetById возвращает информацию о комнате по её идентификатору, включая подключённых пользователей.
 func (service *RoomService) GetById(ctx context.Context, id uint64, ws *WSServer) (*common.RoomSessionResponse, error) {
 	room, err := service.repo.FindById(ctx, id)
 	if err != nil {
@@ -135,6 +142,7 @@ func (service *RoomService) GetById(ctx context.Context, id uint64, ws *WSServer
 	return resp, nil
 }
 
+// Create создаёт новую игровую комнату. Если установлен пароль, он хэшируется с помощью bcrypt.
 func (service *RoomService) Create(ctx context.Context, form common.RoomRequest) error {
 	if *form.Password != "" {
 		password, err := bcrypt.GenerateFromPassword([]byte(*form.Password), config.ServerConfig.BcryptPower)
@@ -160,6 +168,7 @@ func (service *RoomService) Create(ctx context.Context, form common.RoomRequest)
 	return service.repo.Create(ctx, room)
 }
 
+// DeleteById удаляет комнату по её идентификатору.
 func (service *RoomService) DeleteById(ctx context.Context, id uint64) error {
 	return service.repo.DeleteById(ctx, id)
 }

@@ -1,3 +1,4 @@
+// Package service реализует бизнес-логику приложения.
 package service
 
 import (
@@ -47,6 +48,7 @@ var Upgrader = websocket.Upgrader{
 	},
 }
 
+// ConnectedUser представляет подключённого пользователя в комнате игры.
 type ConnectedUser struct {
 	ID          uuid.UUID       `json:"id"`
 	Name        string          `json:"name"`
@@ -55,11 +57,13 @@ type ConnectedUser struct {
 	IsConnected bool            `json:"is_connected"`
 }
 
+// SymbolPosition описывает занятую позицию на игровом поле.
 type SymbolPosition struct {
 	ID     string `json:"id"`
 	Symbol string `json:"symbol"`
 }
 
+// RoomServer представляет комнату с пользователями и игровым состоянием.
 type RoomServer struct {
 	ID         uint64            `json:"id"`
 	Users      []*ConnectedUser  `json:"users"`
@@ -68,12 +72,14 @@ type RoomServer struct {
 	GameStatus string            `json:"game_status"`
 }
 
+// WSServer управляет всеми комнатами и обработкой WebSocket-соединений.
 type WSServer struct {
 	Rooms        map[uint64]*RoomServer `json:"rooms"`
 	ScoreService *ScoreService
 	Mu           sync.Mutex
 }
 
+// GameRequest представляет входящее сообщение от клиента.
 type GameRequest struct {
 	Action     string      `json:"action,omitempty"`
 	Data       interface{} `json:"data,omitempty"`
@@ -82,6 +88,7 @@ type GameRequest struct {
 	Symbol     string      `json:"symbol,omitempty"`
 }
 
+// GameReponse представляет ответ сервера клиенту.
 type GameReponse struct {
 	Action      string      `json:"action"`
 	Data        interface{} `json:"data,omitempty"`
@@ -90,6 +97,7 @@ type GameReponse struct {
 	UserID      *uuid.UUID  `json:"user_id,omitempty"`
 }
 
+// NewWsServer создаёт новый экземпляр WSServer.
 func NewWsServer(scoreService *ScoreService) *WSServer {
 	return &WSServer{
 		Rooms:        make(map[uint64]*RoomServer),
@@ -97,14 +105,12 @@ func NewWsServer(scoreService *ScoreService) *WSServer {
 	}
 }
 
+// GameLoop обрабатывает основной цикл игры для пользователя.
 func (ws *WSServer) GameLoop(
 	currentUser *common.User,
 	room *common.RoomSessionResponse,
 	conn *websocket.Conn,
 ) bool {
-	// if ws.Rooms[room.ID] != nil {
-	// 	fmt.Println(ws.Rooms[room.ID].Users[0], len(ws.Rooms[room.ID].Users))
-	// }
 	if ws.isRoomFull(currentUser.ID, room.ID, conn) {
 		return true
 	}
@@ -139,6 +145,7 @@ func (ws *WSServer) GameLoop(
 	)
 }
 
+// RefreshConnection обновляет WebSocket-соединение для пользователя в комнате.
 func (ws *WSServer) RefreshConnection(currentUser *common.User, room *common.RoomSessionResponse, conn *websocket.Conn) {
 	if currentUser == nil {
 		slog.Error("currentUser  is nil")
@@ -159,6 +166,7 @@ func (ws *WSServer) RefreshConnection(currentUser *common.User, room *common.Roo
 	}
 }
 
+// CloseConnection закрывает соединение пользователя и помечает его как отключённого.
 func (ws *WSServer) CloseConnection(roomID uint64, conn *websocket.Conn) {
 	ws.Mu.Lock()
 	defer ws.Mu.Unlock()
@@ -185,6 +193,7 @@ func (ws *WSServer) CloseConnection(roomID uint64, conn *websocket.Conn) {
 	}
 }
 
+// proccessCommand обрабатывает действия, отправленные клиентом.
 func (ws *WSServer) proccessCommand(
 	currentUser *common.User,
 	room *common.RoomSessionResponse,

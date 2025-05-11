@@ -1,3 +1,4 @@
+// Package service реализует бизнес-логику приложения.
 package service
 
 import (
@@ -10,6 +11,13 @@ import (
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/common"
 )
 
+// opositeSymbol возвращает противоположный символ для игры (X/O)
+//
+// Параметры:
+//   - mainSymbol: исходный символ ("X" или "O")
+//
+// Возвращает:
+//   - string: противоположный символ или пустую строку если входной символ невалиден
 func opositeSymbol(mainSymbol string) string {
 	opositeSymbol := ""
 	if mainSymbol == "" {
@@ -26,6 +34,13 @@ func opositeSymbol(mainSymbol string) string {
 	return opositeSymbol
 }
 
+// createRoom создает новую игровую комнату если она не существует
+//
+// Параметры:
+//   - roomID: ID создаваемой комнаты
+//
+// Действия:
+//   - Инициализирует комнату с дефолтными значениями если ее не существует
 func (ws *WSServer) createRoom(roomID uint64) {
 	if ws.Rooms[roomID] == nil {
 		ws.Rooms[roomID] = &RoomServer{
@@ -37,6 +52,16 @@ func (ws *WSServer) createRoom(roomID uint64) {
 	}
 }
 
+// addUser добавляет пользователя в комнату
+//
+// Параметры:
+//   - currentUser: данные пользователя
+//   - room: целевая комната
+//   - conn: WebSocket соединение
+//
+// Особенности:
+//   - Использует мьютекс для потокобезопасности
+//   - Не добавляет пользователя если он уже в комнате
 func (ws *WSServer) addUser(currentUser *common.User, room *common.RoomSessionResponse, conn *websocket.Conn) {
 	ws.Mu.Lock()
 	defer ws.Mu.Unlock()
@@ -56,6 +81,14 @@ func (ws *WSServer) addUser(currentUser *common.User, room *common.RoomSessionRe
 	}
 }
 
+// isUserInRoom проверяет наличие пользователя в комнате
+//
+// Параметры:
+//   - userID: ID пользователя
+//   - roomID: ID комнаты
+//
+// Возвращает:
+//   - bool: true если пользователь найден в комнате
 func (ws *WSServer) isUserInRoom(userID uuid.UUID, roomID uint64) bool {
 	room, exists := ws.Rooms[roomID]
 	if !exists {
@@ -69,6 +102,18 @@ func (ws *WSServer) isUserInRoom(userID uuid.UUID, roomID uint64) bool {
 	return false
 }
 
+// isRoomFull проверяет заполненность комнаты
+//
+// Параметры:
+//   - userID: ID проверяемого пользователя
+//   - roomID: ID комнаты
+//   - conn: WebSocket соединение для отправки ошибки
+//
+// Возвращает:
+//   - bool: true если комната заполнена (2 игрока) и пользователь не является участником
+//
+// Дополнительно:
+//   - Отправляет сообщение об ошибке если комната заполнена
 func (ws *WSServer) isRoomFull(userID uuid.UUID, roomID uint64, conn *websocket.Conn) bool {
 	if ws.Rooms[roomID] != nil && len(ws.Rooms[roomID].Users) == 2 && !ws.isUserInRoom(userID, roomID) {
 		err := conn.WriteMessage(
@@ -86,6 +131,14 @@ func (ws *WSServer) isRoomFull(userID uuid.UUID, roomID uint64, conn *websocket.
 	return false
 }
 
+// setSecondUserSymbol устанавливает символ второму игроку
+//
+// Параметры:
+//   - roomId: ID комнаты
+//
+// Логика:
+//  1. Если первый игрок выбрал символ, второму назначается противоположный
+//  2. Отправляет уведомление второму игроку о назначенном символе
 func (ws *WSServer) setSecondUserSymbol(roomId uint64) {
 	currentRoom, exists := ws.Rooms[roomId]
 	if !exists {
@@ -129,6 +182,16 @@ func (ws *WSServer) setSecondUserSymbol(roomId uint64) {
 	}
 }
 
+// broadcastMessageToOther рассылает сообщение всем игрокам комнаты кроме указанного
+//
+// Параметры:
+//   - currentUserID: ID игрока, которому НЕ нужно отправлять сообщение
+//   - room: целевая комната
+//   - raw: сырое сообщение для отправки
+//
+// Особенности:
+//   - Использует мьютекс для потокобезопасности
+//   - Логирует ошибки отправки
 func (ws *WSServer) broadcastMessageToOther(
 	currentUserID uuid.UUID,
 	room *common.RoomSessionResponse,
@@ -155,6 +218,15 @@ func (ws *WSServer) broadcastMessageToOther(
 	}
 }
 
+// broadcastMessageToAll рассылает сообщение всем игрокам комнаты
+//
+// Параметры:
+//   - room: целевая комната
+//   - raw: сырое сообщение для отправки
+//
+// Особенности:
+//   - Использует мьютекс для потокобезопасности
+//   - Логирует ошибки отправки
 func (ws *WSServer) broadcastMessageToAll(
 	room *common.RoomSessionResponse,
 	raw []byte,

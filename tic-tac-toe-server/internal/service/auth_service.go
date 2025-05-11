@@ -1,3 +1,4 @@
+// Package service реализует бизнес-логику приложения.
 package service
 
 import (
@@ -14,16 +15,25 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// AuthService предоставляет сервис для работы с аутентификацией пользователей.
 type AuthService struct {
 	repo repository.UserRepository
 }
 
+// NewAuthService создает новый экземпляр AuthService.
+//
+// Параметры:
+//   - repoRoom: репозиторий для работы с пользователями
+//
+// Возвращает:
+//   - *AuthService: указатель на созданный сервис
 func NewAuthService(repoRoom repository.UserRepository) *AuthService {
 	return &AuthService{
 		repo: repoRoom,
 	}
 }
 
+// Claims представляет структуру JWT токена с информацией о пользователе.
 type Claims struct {
 	Sub struct {
 		Email string `json:"email"`
@@ -31,6 +41,14 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
+// CheckTokenIsNotExpired проверяет валидность JWT токена.
+//
+// Параметры:
+//   - token: JWT токен (может содержать префикс "Bearer")
+//
+// Возвращает:
+//   - *Claims: данные из токена
+//   - error: ошибку, если токен невалиден или просрочен
 func CheckTokenIsNotExpired(token string) (*Claims, error) {
 	token = strings.TrimSpace(strings.ReplaceAll(token, "Bearer ", ""))
 
@@ -42,6 +60,18 @@ func CheckTokenIsNotExpired(token string) (*Claims, error) {
 	return claims, nil
 }
 
+// SignIn выполняет аутентификацию пользователя.
+//
+// Параметры:
+//   - ctx: контекст
+//   - form: данные для входа (email и пароль)
+//
+// Возвращает:
+//   - map[string]string: содержит JWT токен
+//   - error: ошибки:
+//   - "password is not valid" - неверный пароль
+//   - "user not found" - пользователь не найден
+//   - ошибки генерации токена
 func (service *AuthService) SignIn(ctx context.Context, form common.AuthSignInRequest) (map[string]string, error) {
 	currentUser, err := service.repo.FindByEmail(ctx, form.Email)
 	if err != nil {
@@ -61,6 +91,17 @@ func (service *AuthService) SignIn(ctx context.Context, form common.AuthSignInRe
 	}, nil
 }
 
+// SignUp регистрирует нового пользователя.
+//
+// Параметры:
+//   - ctx: контекст
+//   - form: данные для регистрации
+//
+// Возвращает:
+//   - error: ошибки:
+//   - "user with this email already exists" - пользователь уже существует
+//   - ошибки хеширования пароля
+//   - ошибки создания пользователя
 func (service *AuthService) SignUp(ctx context.Context, form common.AuthSignUpRequest) error {
 	if _, err := service.repo.FindByEmail(ctx, form.Email); err == nil {
 		return errors.New("user with this email already exists")
@@ -76,6 +117,14 @@ func (service *AuthService) SignUp(ctx context.Context, form common.AuthSignUpRe
 	return service.repo.Create(ctx, form)
 }
 
+// getToken генерирует JWT токен для пользователя.
+//
+// Параметры:
+//   - user: данные пользователя
+//
+// Возвращает:
+//   - string: JWT токен
+//   - error: ошибки генерации токена
 func getToken(user common.User) (string, error) {
 	seconds := config.ServerConfig.JWTConfig.AccessTokenTTL
 	duration, err := time.ParseDuration(seconds)
@@ -100,6 +149,17 @@ func getToken(user common.User) (string, error) {
 	return t, nil
 }
 
+// parseToken разбирает и валидирует JWT токен.
+//
+// Параметры:
+//   - token: JWT токен
+//
+// Возвращает:
+//   - *Claims: данные из токена
+//   - error: ошибки:
+//   - "token is expired" - токен просрочен
+//   - "your token is invalid" - невалидный токен
+//   - ошибки парсинга токена
 func parseToken(token string) (*Claims, error) {
 	var claims Claims
 	t, err := jwt.ParseWithClaims(token, &claims, func(token *jwt.Token) (interface{}, error) {

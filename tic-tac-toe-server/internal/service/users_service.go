@@ -1,3 +1,4 @@
+// Package service реализует бизнес-логику приложения.
 package service
 
 import (
@@ -8,11 +9,13 @@ import (
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/repository"
 )
 
+// UserService предоставляет методы для получения информации о пользователе.
 type UserService struct {
 	userRepo  repository.UserRepository
 	scoreRepo repository.ScoreRepository
 }
 
+// NewUserService создаёт новый экземпляр UserService.
 func NewUserService(userRepo repository.UserRepository, scoreRepo repository.ScoreRepository) *UserService {
 	return &UserService{
 		userRepo:  userRepo,
@@ -20,6 +23,7 @@ func NewUserService(userRepo repository.UserRepository, scoreRepo repository.Sco
 	}
 }
 
+// GetCurrentUser возвращает информацию о текущем пользователе, включая счёт побед.
 func (service *UserService) GetCurrentUser(ctx context.Context) (*common.UserResponse, error) {
 	email, ok := ctx.Value(common.USER_MAIL).(string)
 	if !ok {
