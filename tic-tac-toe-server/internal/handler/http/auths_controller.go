@@ -1,3 +1,4 @@
+// Package http_handler предоставляет HTTP обработчики для API игры "Крестики-нолики".
 package http_handler
 
 import (
@@ -11,16 +12,44 @@ import (
 	"github.com/margar-melkonyan/tic-tac-toe-game/tic-tac-toe.git/internal/service"
 )
 
+// AuthHandler обрабатывает HTTP запросы для аутентификации пользователей.
 type AuthHandler struct {
 	service service.AuthService
 }
 
+// NewAuthHandler создает новый экземпляр AuthHandler.
+//
+// Параметры:
+//   - service: сервис аутентификации, реализующий бизнес-логику
+//
+// Возвращает:
+//   - *AuthHandler: указатель на созданный обработчик
 func NewAuthHandler(service service.AuthService) *AuthHandler {
 	return &AuthHandler{
 		service: service,
 	}
 }
 
+// SingIn обрабатывает запрос на вход пользователя.
+//
+// Параметры:
+//   - w: http.ResponseWriter для записи ответа
+//   - r: *http.Request с данными запроса
+//
+// Логика работы:
+//  1. Проверяет Content-Type запроса
+//  2. Читает и парсит JSON тело запроса (макс. 10MB)
+//  3. Валидирует входные данные
+//  4. При ошибках валидации возвращает локализованные сообщения
+//  5. Вызывает сервис аутентификации
+//  6. Возвращает JWT токен при успешной аутентификации
+//
+// Возможные коды ответа:
+//   - 200: успешный вход, возвращает токен
+//   - 400: ошибка парсинга JSON
+//   - 422: ошибки валидации
+//   - 409: конфликт (неверные учетные данные)
+//   - 500: внутренняя ошибка сервера
 func (h *AuthHandler) SingIn(w http.ResponseWriter, r *http.Request) {
 	resp := helper.Response{}
 	if resp.IsValidMediaType(w, r) {
@@ -61,6 +90,26 @@ func (h *AuthHandler) SingIn(w http.ResponseWriter, r *http.Request) {
 	resp.ResponseWrite(w, r, http.StatusOK)
 }
 
+// SignUp обрабатывает запрос на регистрацию пользователя.
+//
+// Параметры:
+//   - w: http.ResponseWriter для записи ответа
+//   - r: *http.Request с данными запроса
+//
+// Логика работы:
+//  1. Проверяет Content-Type запроса
+//  2. Читает и парсит JSON тело запроса (макс. 10MB)
+//  3. Валидирует входные данные
+//  4. При ошибках валидации возвращает локализованные сообщения
+//  5. Вызывает сервис регистрации
+//  6. Возвращает статус создания
+//
+// Возможные коды ответа:
+//   - 200: успешная регистрация
+//   - 400: ошибка парсинга JSON
+//   - 422: ошибки валидации
+//   - 409: конфликт (пользователь уже существует)
+//   - 500: внутренняя ошибка сервера
 func (h *AuthHandler) SignUp(w http.ResponseWriter, r *http.Request) {
 	resp := helper.Response{}
 	if resp.IsValidMediaType(w, r) {
