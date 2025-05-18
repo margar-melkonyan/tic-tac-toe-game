@@ -9,6 +9,7 @@ RUN npm ci
 
 # Копируем исходный код
 COPY tic-tac-toe-game-ui/ .
+COPY ./.env .env
 
 # Собираем приложение
 RUN  npm run build:no-check
